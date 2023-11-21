@@ -145,9 +145,91 @@
 
 ![分布式架构解决方案——微服务](./images/分布式架构解决方案——微服务.png)
 
+> 微服务是一种经过良好架构设计的**分布式**架构方案，微服务架构特征：
+>
+> - 单一职责：微服务拆分粒度更小，每一个服务都对应唯一的业务功能，做到单一职责，避免重复业务开发
+> - 面向服务：微服务对外暴露业务接口
+> - 自治：团队独立、技术独立、数据独立、部署独立
+> - 隔离性：服务调用做好隔离、容错、降级，避免出现级联问题
+
+![微服务架构特征](./images/微服务架构特征.png)
+
+==总结：==
+
+单体架构特点：
+
+- 简单方便，高度耦合，扩展性差，适合小型项目
+- 例如：学生管理系统
+
+分布式架构特点：
+
+- 松耦合，扩展性好，但架构复杂，难度大。适合大型互联网项目
+- 例如：京东、淘宝
+
+微服务：一种良好的分布式架构方案
+
+- 优点：拆分粒度更小、服务更独立、耦合度更低
+- 缺点：架构非常复杂，运维、监控、部署难度更高
+
 
 
 ### 2.SpringCloud
+
+#### 微服务技术对比
+
+微服务这种方案需要技术框架来落地，全球的互联网公司都在积极尝试自己的微服务落地技术。国内最知名的就是 <span style="color:red;">**SpringCloud**</span> 和 Alibaba的 <span style="color:red;">**Dubbo**</span> 。
+
+|                |         Dubbo         |       SpringCloud        |    SpringCloudAlibaba    |
+| :------------: | :-------------------: | :----------------------: | :----------------------: |
+|    注册中心    |   zookeeper、Redis    |      Eureka、Cousul      |      Nacos、Eureka       |
+|  服务远程调用  |       Dubbo协议       |    Feign（http协议）     |       Dubbo、Feign       |
+|    配置中心    |          无           |   Spring Cloud Config    | SpringCloudConfig、Nacos |
+|    服务网关    |          无           | SpringCloudGateway、Zuul | SpringCloudGateway、Zuul |
+| 服务监控和保护 | dubbo-admin（功能弱） |         Hystrix          |         Sentinel         |
+
+企业中可能使用到的技术组合如下：
+
+![企业中使用的微服务技术组合](./images/企业中使用的微服务技术组合.png)
+
+==**SpringCloudAlibaba** 本质上是按照 **SpringCloud** 标准实现的，可以认为它是 **SpringCloud** 中的一部分。==
+
+
+
+#### SpringCloud
+
+[SpringCloud](https://spring.io/projects/spring-cloud) 是目前国内使用最广泛的微服务框架。
+
+**SpringCloud** 集成了各种微服务功能组件，并基于 **SpringBoot** 实现了这些组件的<span style="color:red;">自动装配</span>，从而提供了良好的开箱即用体验：
+
+![微服务集成的各种功能组件](./images/微服务集成的各种功能组件.png)
+
+**SpringCloud** 与 **SpringBoot** 的版本兼容关系如下：
+
+![SpringCloud与SpringBoot的版本兼容关系](./images/SpringCloud与SpringBoot的版本兼容关系.png)
+
+
+
+#### 服务拆分
+
+> ==服务拆分时需要注意的事项：==
+>
+> 1.不同服务，不要重复开发相同业务
+>
+> 2.各服务数据独立，不要访问其它服务的数据库
+>
+> 3.服务可以将自己的业务暴露为接口，供其它服务调用
+
+拆分案例：cloud-demo
+
+
+
+
+
+#### 远程调用
+
+
+
+
 
 
 
