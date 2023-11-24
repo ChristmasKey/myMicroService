@@ -3,6 +3,8 @@ package com.djn.order;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Name: OrderApplication
@@ -20,5 +22,17 @@ public class OrderApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(OrderApplication.class, args);
+    }
+
+
+    /**
+     * 创建RestTemplate并注入Spring
+     *
+     * @return org.springframework.web.client.RestTemplate
+     * @date 2023/11/23 18:36
+     */
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 }

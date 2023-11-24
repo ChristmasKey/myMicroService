@@ -1,5 +1,8 @@
 package com.djn.order.mapper;
 
+import com.djn.order.domain.Order;
+import org.apache.ibatis.annotations.Param;
+
 /**
  * Name: OrderMapper
  * Description: 订单Mapper
@@ -11,4 +14,6 @@ package com.djn.order.mapper;
  * @since 2023-11-22 16:07
  */
 public interface OrderMapper {
+
+    Order findById(@Param("orderId") Long orderId);
 }

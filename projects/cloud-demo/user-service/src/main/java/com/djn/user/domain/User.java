@@ -1,5 +1,7 @@
 package com.djn.user.domain;
 
+import lombok.Data;
+
 /**
  * Name: User
  * Description: 用户
@@ -10,5 +12,9 @@ package com.djn.user.domain;
  * @version 1.0
  * @since 2023-11-22 15:36
  */
+@Data
 public class User {
+    private Long id;
+    private String username;
+    private String address;
 }

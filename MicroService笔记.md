@@ -209,7 +209,9 @@
 
 
 
-#### 服务拆分
+## 分布式服务架构案例
+
+### 服务拆分
 
 > ==服务拆分时需要注意的事项：==
 >
@@ -221,23 +223,431 @@
 
 拆分案例：cloud-demo
 
+#### 1.建库建表 cloud_order
+
+![cloud_order库](./images/cloud_order库.png)
 
 
 
+```sql
+/*
+ Navicat Premium Data Transfer
 
-#### 远程调用
+ Source Server         : local-db
+ Source Server Type    : MySQL
+ Source Server Version : 80016
+ Source Host           : localhost:3306
+ Source Schema         : cloud_order
+
+ Target Server Type    : MySQL
+ Target Server Version : 80016
+ File Encoding         : 65001
+
+ Date: 23/11/2023 16:03:17
+*/
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for tb_order
+-- ----------------------------
+DROP TABLE IF EXISTS `tb_order`;
+CREATE TABLE `tb_order`  (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '订单id',
+  `user_id` bigint(20) NOT NULL COMMENT '用户id',
+  `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '商品名称',
+  `price` decimal(10, 2) NOT NULL COMMENT '商品价格',
+  `num` int(11) NULL DEFAULT 0 COMMENT '商品数量',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `ordername`(`name`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of tb_order
+-- ----------------------------
+INSERT INTO `tb_order` VALUES (1, 1, 'Apple 苹果 iPhone 12', 699900.00, 1);
+INSERT INTO `tb_order` VALUES (2, 2, '雅迪 yadea 新国标电动车', 20990.00, 1);
+INSERT INTO `tb_order` VALUES (3, 3, '骆驼（CAMEL） 休闲运动服', 43900.00, 1);
+INSERT INTO `tb_order` VALUES (4, 4, '小米14 Pro 双模5G 骁龙8第三代', 35900.00, 1);
+INSERT INTO `tb_order` VALUES (5, 5, 'OPPO Reno3 Pro 双模5G', 299900.00, 1);
+INSERT INTO `tb_order` VALUES (6, 6, '美的（Midea）新能效空调', 544900.00, 1);
+INSERT INTO `tb_order` VALUES (7, 2, '西昊/SIHOO 人体工学椅', 79900.00, 1);
+INSERT INTO `tb_order` VALUES (8, 3, '梵班（FAMDBANN）', 31900.00, 1);
+
+SET FOREIGN_KEY_CHECKS = 1;
+```
 
 
 
+#### 2.建库建表 cloud_user
+
+![cloud_user库](./images/cloud_user库.png)
 
 
 
+```sql
+/*
+ Navicat Premium Data Transfer
 
-## 分布式服务架构案例
+ Source Server         : local-db
+ Source Server Type    : MySQL
+ Source Server Version : 80016
+ Source Host           : localhost:3306
+ Source Schema         : cloud_user
+
+ Target Server Type    : MySQL
+ Target Server Version : 80016
+ File Encoding         : 65001
+
+ Date: 23/11/2023 16:03:29
+*/
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for tb_user
+-- ----------------------------
+DROP TABLE IF EXISTS `tb_user`;
+CREATE TABLE `tb_user`  (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `username` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '收件人',
+  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '地址',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `username`(`username`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of tb_user
+-- ----------------------------
+INSERT INTO `tb_user` VALUES (1, '柳岩', '湖南省衡阳市');
+INSERT INTO `tb_user` VALUES (2, '文二狗', '陕西省西安市');
+INSERT INTO `tb_user` VALUES (3, '雨化田', '湖北省十堰市');
+INSERT INTO `tb_user` VALUES (4, '张必沉', '天津市');
+INSERT INTO `tb_user` VALUES (5, '郑爽爽', '辽宁省沈阳市大东区');
+INSERT INTO `tb_user` VALUES (6, '范冰冰', '山东省青岛市');
+
+SET FOREIGN_KEY_CHECKS = 1;
+```
 
 
 
-## eureka注册中心
+#### 3.建项目
+
+![cloud_demo项目结构](./images/cloud_demo项目结构.png)
+
+- 创建父工程 cloud_demo，pom文件如下：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.djn</groupId>
+    <artifactId>cloud-demo</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0</version>
+    <modules>
+        <module>order-service</module>
+        <module>user-service</module>
+    </modules>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.6.4</version>
+        <relativePath/>
+    </parent>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <spring-cloud.version>2021.0.3</spring-cloud.version>
+        <mysql.version>8.0.33</mysql.version>
+        <mybatis.version>2.2.2</mybatis.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!--SpringCloud-->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+            </dependency>
+            <!--数据库驱动 mysql-->
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${mysql.version}</version>
+            </dependency>
+            <!--Mybatis-->
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>${mybatis.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+
+
+- 创建子模块 order_service
+
+pom.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>cloud-demo</artifactId>
+        <groupId>com.djn</groupId>
+        <version>1.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>order-service</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+application.yml
+
+```yaml
+server:
+  port: 9981
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/cloud_order?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+mybatis:
+  type-aliases-package: com.djn.order.domain
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath*:mapper/*Mapper.xml
+logging:
+  pattern:
+    dateformat: MM-dd HH:ss:SSS
+  level:
+    com.djn: debug
+```
+
+==业务代码详见项目代码==
+
+
+
+- 创建子模块 user_service
+
+pom.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>cloud-demo</artifactId>
+        <groupId>com.djn</groupId>
+        <version>1.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>user-service</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>app</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+application.yml
+
+```yaml
+server:
+  port: 8864
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/cloud_user?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+mybatis:
+  type-aliases-package: com.djn.user.domain
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath*:mapper/*Mapper.xml
+logging:
+  pattern:
+    dateformat: MM-dd HH:ss:SSS
+  level:
+    com.djn: debug
+```
+
+==业务代码详见项目代码==
+
+
+
+#### 4.启动测试
+
+分别访问两个服务的接口，得到如下结果
+
+http://localhost:9981/order/1
+
+![Order服务接口访问](./images/Order服务接口访问.png)
+
+http://localhost:8864/user/1
+
+![User服务接口访问](./images/User服务接口访问.png)
+
+
+
+### 远程调用
+
+案例：根据订单id查询订单的同时，把订单所属的用户信息一起返回
+
+![远程调用案例效果图](./images/远程调用案例效果图.png)
+
+远程调用方式分析
+
+![远程调用方式分析](./images/远程调用方式分析.png)
+
+既然浏览器、Ajax都可以发起http请求，那么服务也可以。Spring提供了一个工具 <span style="color:red;">RestTemplate</span> 供我们发起各种http请求！
+
+#### 1.注册RestTemplate
+
+在order-service的**OrderApplication**中注册RestTemplate
+
+```java
+@MapperScan("com.djn.order.mapper")
+@SpringBootApplication
+public class OrderApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(OrderApplication.class, args);
+    }
+
+    /**
+     * 创建RestTemplate并注入Spring
+     *
+     * @return org.springframework.web.client.RestTemplate
+     * @date 2023/11/23 18:36
+     */
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+```
+
+#### 2.注入并使用
+
+改造OrderServiceImpl，实现服务的远程调用
+
+```java
+@Service
+public class OrderServiceImpl implements OrderService {
+
+    @Resource
+    private OrderMapper orderMapper;
+
+    @Resource
+    private RestTemplate restTemplate;
+
+    @Override
+    public Order queryOrderById(Long orderId) {
+        //1.查询订单
+        Order order = orderMapper.findById(orderId);
+        //2.利用RestTemplate发起http请求
+        //2.1拼接url路径
+        String url = "http://localhost:8864/user/" + order.getUserId();
+        //2.2发送http请求，实现远程调用
+        User user = restTemplate.getForObject(url, User.class);
+        //3.封装User到Order
+        order.setUser(user);
+        //4.返回
+        return order;
+    }
+}
+```
+
+#### 3.调用结果
+
+![OrderService远程调用结果](./images/OrderService远程调用结果.png)
+
+
+
+## Eureka注册中心
+
+### 提供者与消费者
+
+服务提供者：一次业务中，被其他服务调用的服务（提供接口给其它服务）
+
+服务消费者：一次业务中，调用其它服务的服务（调用其它服务提供的接口）
+
+~一个服务既可以是提供者，也可以是消费者。例如：当服务A调用服务B，服务B再调用服务C的时候，服务B既是A的提供者，又是C的消费者。~
+
+
 
 
 

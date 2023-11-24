@@ -1,5 +1,7 @@
 package com.djn.order.domain;
 
+import lombok.Data;
+
 /**
  * Name: Order
  * Description: 订单
@@ -10,5 +12,13 @@ package com.djn.order.domain;
  * @version 1.0
  * @since 2023-11-22 16:07
  */
+@Data
 public class Order {
+    private Long id;
+    private Long userId;
+    private String name;
+    private Double price;
+    private Integer num;
+
+    private User user;
 }
