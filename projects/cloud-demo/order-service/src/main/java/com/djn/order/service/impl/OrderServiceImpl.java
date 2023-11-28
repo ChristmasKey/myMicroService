@@ -35,7 +35,8 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderMapper.findById(orderId);
         //2.利用RestTemplate发起http请求
         //2.1拼接url路径
-        String url = "http://localhost:8864/user/" + order.getUserId();
+        //String url = "http://localhost:8864/user/" + order.getUserId();
+        String url = "http://userservice/user/" + order.getUserId();
         //2.2发送http请求，实现远程调用
         User user = restTemplate.getForObject(url, User.class);
         //3.封装User到Order
