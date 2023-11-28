@@ -840,6 +840,54 @@ eureka:
 
 #### 2.服务注册
 
+需求：将 user-service 服务注册到 eureka-server
+
+①在 user-service 的 pom 文件中引入如下依赖
+
+```xml
+<!--eureka客户端-->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+</dependency>
+```
+
+②在 application.yml 文件中编写如下配置
+
+```yaml
+spring:
+  application:
+    name: userService # user服务的服务名称
+eureka:
+  client:
+    service-url: # eureka的地址信息
+      defaultZone: http://127.0.0.1:10086/eureka/
+```
+
+③ order-service 的注册步骤同理，启动项目后到 eureka 中查看注册的服务实例
+
+![Eureka中注册的服务实例](./images/Eureka中注册的服务实例.png)
+
+④==如何启动多个相同的服务==
+
+我们可以将一个服务多次启动，模拟多实例部署，但为了避免端口冲突，需要修改端口配置：
+
+第一步：
+
+![IDEA启动多个相同服务1](./images/IDEA启动多个相同服务1.png)
+
+第二步：
+
+![IDEA启动多个相同服务2](./images/IDEA启动多个相同服务2.png)
+
+第三步：
+
+![IDEA启动多个相同服务3](./images/IDEA启动多个相同服务3.png)
+
+最终效果：
+
+![向eureka中注册多个相同服务实例](./images/向eureka中注册多个相同服务实例.png)
+
 
 
 #### 3.服务发现
