@@ -892,11 +892,53 @@ eureka:
 
 #### 3.服务发现
 
+需求：在 order-service 完成服务拉取
+
+~服务拉取是基于服务名称获取服务列表，然后再对服务列表做负载均衡~
+
+①修改 order-service 的代码，修改访问user服务的url路径：用服务名称代替ip、端口
+
+```java
+String url = "http://userservice/user/" + order.getUserId();
+```
+
+②在 order-service 项目的启动类中注册RestTemplate时，添加**负载均衡**注解
+
+```java
+@Bean
+@LoadBalanced
+public RestTemplate restTemplate() {
+    return new RestTemplate();
+}
+```
+
+③重启 order-service 项目后，对服务接口进行多次访问，可以看到每次访问都会<span style="color:red;">通过负载均衡做不同的 user-service 服务调用</span>
+
+![orderService的服务访问](./images/orderService的服务访问.png)
+
+![userService的服务调用](./images/userService的服务调用.png)
+
+![userService的服务调用2](./images/userService的服务调用2.png)
 
 
 
+## Ribbon负载均衡
 
-## Ribbon负载均衡原理
+*负载均衡的流程*
+
+![负载均衡的流程](./images/负载均衡的流程.png)
+
+### 负载均衡原理
+
+
+
+### 负载均衡策略
+
+
+
+### 懒加载
+
+
 
 
 
