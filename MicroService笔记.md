@@ -922,17 +922,156 @@ public RestTemplate restTemplate() {
 
 
 
-## Ribbon负载均衡
+## 负载均衡
 
-*负载均衡的流程*
+SpringCloud 中的负载均衡一开始是由一个名为 Ribbon 的组件实现的；<span style="color:red;">**但由于 Ribbon 已经停更，SpringCloud 在 Hoxton.M2 版本将 Ribbon 移除，并使用 SpringCloud Loadbalancer作为其替代品！**</span>
+
+![SpringCloudLoadbalancer替代Ribbon](./images/SpringCloudLoadbalancer替代Ribbon.png)
+
+二者区别
+
+|           组件           | 组件提供的负载策略                                           | 支持负载的客户端                            |
+| :----------------------: | :----------------------------------------------------------- | :------------------------------------------ |
+|          Ribbon          | 轮询、随机、重试策略、权重优先策略、<br/>BestAvailableRule：会先过滤掉由于多次访问故障而处于断路器跳闸状态的服务，然后选择一个并发量最小的服务、<br/>AvailabilityFilterRule：先过滤掉故障实例，再选择并发较小的实例、<br/>ZoneAvoidanceRule：默认规则，复合判断server所在区域的性能和server的可用性选择服务器 | Feign或OpenFeign、RestTemplate等Web调用工具 |
+| SpringCloud Loadbalancer | 轮询、随机                                                   | Ribbon所支持的、WebClient                   |
+
+LoadBalancer 的优势主要是，支持**响应式编程**的方式**异步访问**客户端，依赖 Spring Web Flux 实现客户端负载均衡调用。
+
+
+
+### 负载均衡原理
+
+*负载均衡的流程*（图中SpringCloud版本较低，所以还在使用Ribbon做负载均衡）
 
 ![负载均衡的流程](./images/负载均衡的流程.png)
 
-### 负载均衡原理
+在 Eureka实用案例 中，做“服务发现”时我们在给 RestTemplate 注册时加上了**负载均衡**注解
+
+![负载均衡原理1](./images/负载均衡原理1.png)
+
+在 `LoadBalancerAutoConfiguration` 自动配置类中会给标有 @LoadBalanced 注解的 RestTemplate 添加一个负载均衡拦截器，这样就能通过 **LoadBalancerInterceptor** 去添加负载均衡策略
+
+```java
+/**
+ * 对 阻塞客户端负载均衡 的自动配置
+ * Auto-configuration for blocking client-side load balancing.
+ *
+ * @author Spencer Gibb
+ * @author Dave Syer
+ * @author Will Tran
+ * @author Gang Li
+ * @author Olga Maciaszek-Sharma
+ */
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnClass(RestTemplate.class)
+@ConditionalOnBean(LoadBalancerClient.class)
+@EnableConfigurationProperties(LoadBalancerClientsProperties.class)
+public class LoadBalancerAutoConfiguration {
+
+    /**
+     * 会注入标有 @LoadBalanced 注解的 RestTemplate
+     */
+	@LoadBalanced
+	@Autowired(required = false)
+	private List<RestTemplate> restTemplates = Collections.emptyList();
+
+	@Autowired(required = false)
+	private List<LoadBalancerRequestTransformer> transformers = Collections.emptyList();
+
+    // 函数名：负载均衡RestTemplate初始化器弃用后，返回智能初始化单例对象
+    // 推测：该函数的作用是 注册一个 “当RestTemplate设置负载均衡拦截器失败后，会被调用来给RestTemplate设置负载均衡拦截器” 的单实例对象
+	@Bean
+	public SmartInitializingSingleton loadBalancedRestTemplateInitializerDeprecated(
+			final ObjectProvider<List<RestTemplateCustomizer>> restTemplateCustomizers) {
+		return () -> restTemplateCustomizers.ifAvailable(customizers -> {
+			for (RestTemplate restTemplate : LoadBalancerAutoConfiguration.this.restTemplates) {
+				for (RestTemplateCustomizer customizer : customizers) {
+					customizer.customize(restTemplate);
+				}
+			}
+		});
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	public LoadBalancerRequestFactory loadBalancerRequestFactory(LoadBalancerClient loadBalancerClient) {
+		return new LoadBalancerRequestFactory(loadBalancerClient, this.transformers);
+	}
+
+    // 在静态内部类中 配置负载均衡拦截器 和 RestTemplate定制器
+	@Configuration(proxyBeanMethods = false)
+	@Conditional(RetryMissingOrDisabledCondition.class)
+	static class LoadBalancerInterceptorConfig {
+
+		@Bean
+		public LoadBalancerInterceptor loadBalancerInterceptor(LoadBalancerClient loadBalancerClient,
+				LoadBalancerRequestFactory requestFactory) {
+            // 返回创建的 LoadBalancerInterceptor 负载均衡拦截器实例对象
+			return new LoadBalancerInterceptor(loadBalancerClient, requestFactory);
+		}
+
+		@Bean
+		@ConditionalOnMissingBean
+		public RestTemplateCustomizer restTemplateCustomizer(final LoadBalancerInterceptor loadBalancerInterceptor) {
+            // 给 RestTemplate 添加 LoadBalancerInterceptor 负载均衡拦截器
+			return restTemplate -> {
+				List<ClientHttpRequestInterceptor> list = new ArrayList<>(restTemplate.getInterceptors());
+				list.add(loadBalancerInterceptor);
+				restTemplate.setInterceptors(list);
+			};
+		}
+
+	}
+    
+    // 略...
+}
+```
+
+负责执行拦截动作的是 **LoadBalancerInterceptor** 类
+
+![负载均衡原理2](./images/负载均衡原理2.png)
+
+**LoadBalancerInterceptor** 实现了 **ClientHttpRequestInterceptor** 接口。
+
+![负载均衡原理3](./images/负载均衡原理3.png)
+
+当我们给 **LoadBalancerInterceptor** 的 *intercept* 方法打上断点后，会发现它拦截了 RestTemplate 发起的HTTP请求
+
+![负载均衡原理4](./images/负载均衡原理4.png)
+
+在SpringCloud Loadbalancer 替代 Ribbon 后，上图中负责执行负载均衡策略的实现类也就从 **RibbonLoadBalancerClient** 变成了 **BlockingLoadBalanerClient**，在实现类的 *execute* 方法中会执行负载均衡策略
+
+![负载均衡原理5](./images/负载均衡原理5.png)
+
+把断点打到 *choose* 方法中后，可以看到其实是通过 **RoundRobinLoadBalancer** 的负载均衡策略来获取最终的目标服务实例的
+
+![负载均衡原理6](./images/负载均衡原理6.png)
+
+通过 `Ctrl` + `H` 我们可以看到 **ReactiveLoadBalancer** 的层级结构如下，其中 **RoundRobinLoadBalancer** 是它的<span style="color:red;">子实现类</span>
+
+![负载均衡原理7](./images/负载均衡原理7.png)
+
+在 **RoundRobinLoadBalancer** 中，是如何获取到 Eureka 中注册的服务列表的呢？
+
+![负载均衡原理8](./images/负载均衡原理8.png)
+
+
+
+#### 时序流程图
+
+==对 RestTemplate 请求调用时经过的类流程图如下：==
+
+![负载均衡工作原理的时序流程](./images/负载均衡工作原理的时序流程.png)
+
+*负载均衡的详细流程*
+
+![负载均衡详细流程图](./images/负载均衡详细流程图.png)
 
 
 
 ### 负载均衡策略
+
+
 
 
 
