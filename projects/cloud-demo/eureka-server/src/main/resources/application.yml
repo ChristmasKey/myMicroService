@@ -7,5 +7,8 @@ spring:
     name: eurekaServer # Eureka的服务名称
 eureka:
   client:
-    service-url: # eureka的地址信息
+    serviceUrl: # eureka的地址信息
       defaultZone: http://127.0.0.1:10086/eureka/
+    fetch-registry: false # 是否从eureka中拉取信息列表
+  server:
+    enable-self-preservation: true
