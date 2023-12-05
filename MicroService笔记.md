@@ -1071,6 +1071,12 @@ public class LoadBalancerAutoConfiguration {
 
 ### 负载均衡策略
 
+Ribbon 的负载均衡规则是一个叫做 **IRule** 的接口来定义的，每一个子接口都是一种规则
+
+![IRule的子接口](./images/IRule的子接口.png)
+
+
+
 
 
 
