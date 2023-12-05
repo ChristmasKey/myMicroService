@@ -1075,9 +1075,40 @@ Ribbon 的负载均衡规则是一个叫做 **IRule** 的接口来定义的，�
 
 ![IRule的子接口](./images/IRule的子接口.png)
 
+这些负载均衡策略如下
 
+|                内置负载均衡规则类                 |                           规则描述                           |
+| :-----------------------------------------------: | :----------------------------------------------------------: |
+|                  RoundRobinRule                   |  简单轮训服务列表来选择服务器，它是Ribbon默认的负载均衡规则  |
+|             AvailabilityFilteringRule             | 对以下两种服务器进行忽略：<br>(1)在默认情况下，这台服务器如果3次连接失败，这台服务器就会被设置为“短路”状态。短路状态将持续30秒，如果再次连接失败，短路的持续时间就会几何级地增加。<br>(2)并发数过高的服务器。如果一个服务器的并发连接数过高，配置了AvailabilityFilteringRule规则的客户端也会将其忽略。并发连接数的上限，可以由客户端的\<clientName>.\<clientConfigNameSpace>.ActiveConnectionsLimit属性进行配置。 |
+|              WeightResponseTimeRule               | 为每一个服务器赋予一个权重值。服务器响应时间越长，这个服务器的权重就越小。这个规则会随机选择服务器，这个权重值会影响服务器的选择。 |
+| <span style="color:red;">ZoneAvoidanceRule</span> | 以区域可用的服务器为基础进行服务器的选择。使用Zone对服务器进行分类，这个Zone可以理解为一个机房、一个机架等。而后再对Zone内的多个服务做轮询。 |
+|                 BestAvailableRule                 |       忽略那些短路的服务器，并返回并发数较低的服务器。       |
+|                    RandomRule                     |                  随机选择一个可用的服务器。                  |
+|                     RetryRule                     |                     重试机制的选择逻辑。                     |
 
+通过定义IRule实现，可以修改负载均衡规则，有两种方式：
 
+1.代码方式：在 order-service 中的 OrderApplication 类中，定义一个新的IRule
+
+==此方式可以改变所有 order-service 调用的服务的负载均衡策略==
+
+```java
+@Bean
+public IRule randomRule() {
+    return new RandomRule();
+}
+```
+
+2.配置文件方式：在 order-service 的 application.yml 文件中，添加新的配置也可以修改规则
+
+==此方式可以改变指定服务的负载均衡策略==
+
+```yaml
+userservice:
+  ribbon:
+    NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule # 负载均衡规则
+```
 
 
 
