@@ -1114,8 +1114,35 @@ userservice:
 
 ### 懒加载
 
+**饥饿加载**
+
+Ribbon 默认是采用”懒加载“的，即第一次访问时才会去创建LoadBalancerClient，这样请求的时间会很长。
+
+而“饥饿加载”则会在项目启动时创建，降低第一次访问的耗时，通过下面的配置开启“饥饿加载”：
+
+```yaml
+ribbon:
+  eager-load:
+    enabled: true # 开启饥饿加载
+    clients: # clients是一个集合，多服务的写法如下 
+      - userservice # 指定对 userservice 这个服务进行饥饿加载
+      - xxxservice
+```
 
 
 
+## Nacos注册中心
 
-## nacos注册中心
+### 认识和安装Nacos
+
+
+
+### Nacos快速入门
+
+
+
+### Nacos服务分级存储模型
+
+
+
+### Nacos环境隔离
