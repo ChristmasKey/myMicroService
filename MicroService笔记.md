@@ -1141,7 +1141,37 @@ ribbon:
 
 #### 安装Nacos
 
+在 [官方文档](https://nacos.io/zh-cn/docs/v2/quickstart/quick-start.html) 中可以找到安装包的下载链接，选择版本后将安装包下载下来（这里下载的是2.2.3版本）
 
+![Nacos下载](./images/Nacos下载.png)
+
+下载完成后将压缩文件解压
+
+![Nacos的目录结构](./images/Nacos的目录结构.png)
+
+打开`conf`目录下的 application.properties 文件，修改 Nacos 的启动端口号（默认为 8848）
+
+![Nacos端口号](./images/Nacos端口号.png)
+
+在`bin`目录下运行 cmd 窗口，执行以下命令即可成功启动Nacos
+
+```shell
+startup.cmd -m standalone
+```
+
+其中 -m 指的是 mode，standalone值代表以单机模式启动Nacos
+
+启动成功后的效果图如下
+
+![Nacos启动成功](./images/Nacos启动成功.png)
+
+随后我们访问 Nacos 首页 http://localhost:8848/nacos/index.html
+
+![Nacos首页](./images/Nacos首页.png)
+
+可以注意到，首页上方红框中的提示信息
+
+https://nacos.io/zh-cn/docs/v2/guide/user/auth.html
 
 
 
