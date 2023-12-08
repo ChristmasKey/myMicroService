@@ -1159,7 +1159,7 @@ ribbon:
 startup.cmd -m standalone
 ```
 
-其中 -m 指的是 mode，standalone值代表以单机模式启动Nacos
+~其中-m指的是mode，standalone值代表以单机模式启动Nacos~
 
 启动成功后的效果图如下
 
@@ -1169,9 +1169,35 @@ startup.cmd -m standalone
 
 ![Nacos首页](./images/Nacos首页.png)
 
-可以注意到，首页上方红框中的提示信息
+可以注意到，首页上方红框中的提示信息，官方文档中给出了如下的说明
 
-https://nacos.io/zh-cn/docs/v2/guide/user/auth.html
+![Nacos官方说明](./images/Nacos官方说明.png)
+
+由此可知，我们需要手动配置才能让Nacos启用登录功能，配置内容如下
+
+![Nacos开启登录的配置](./images/Nacos开启登录的配置.png)
+
+修改完配置后，再次启动Nacos，可以看到出现了登录页面
+
+![Nacos登录页面](./images/Nacos登录页面.png)
+
+==其中“身份识别键值对”的具体作用是什么呢？==
+
+这两个属性是权限认证的配置项，用于标识来自其他服务器的请求。当一个请求的请求头中配置了指定的属性时，即可跳过权限认证。
+
+[参考文章](https://blog.csdn.net/qq_41057885/article/details/125059535)
+
+我们在开启Nacos权限认证后，调用 /nacos/v1/cs/configs 接口，会直接跳转到登录界面，且提示 <span style="color:red;">403</span>，服务器拒绝访问。
+
+![身份识别键值对的作用1](./images/身份识别键值对的作用1.png)
+
+此时，我们选择编辑并重发该请求，向该请求头中新增 spring=stone 属性（这里填写我们配置文件中设置的键值对）。
+
+![身份识别键值对的作用2](./images/身份识别键值对的作用2.png)
+
+此时，请求成功了，拿到了Nacos的配置管理列表。
+
+![身份识别键值对的作用3](./images/身份识别键值对的作用3.png)
 
 
 
