@@ -1203,6 +1203,146 @@ startup.cmd -m standalone
 
 ### Nacos快速入门
 
+[Spring官方手册](https://spring-cloud-alibaba-group.github.io/github-pages/2021/en-us/index.html#_more_information_about_nacos_discovery_starter_configurations)
+
+![Nacos服务发现的官方手册](./images/Nacos服务发现的官方手册.png)
+
+[Nacos官方案例](https://nacos.io/zh-cn/docs/archive/use-nacos-with-springcloud.html)
+
+![Nacos服务发现官方案例](./images/Nacos服务发现官方案例.png)
+
+如何查看SpringCloudAlibaba提供的Nacos服务发现案例
+
+![查看SpringCloudAlibaba提供的Nacos服务发现案例](./images/查看SpringCloudAlibaba提供的Nacos服务发现案例.png)
+
+
+
+#### 服务的注册与发现
+
+<span style="color:red;">在 SpringCloud组件中，有一个非常重要的模块——SpringCloudCommons，其主要作用就是 **定义接口规范** 的。</span>
+
+其中 *DiscoveryClient* 接口定义了 “服务发现” 的规范；*ServiceRegistry* 接口定义了 “服务注册” 的规范，所以不论是 Eureka 还是 Nacos 都会在做服务注册发现时遵循这套接口规范。==因此，当我们把 cloud-demo 项目中的注册中心从 Eureka 更换为 Nacos 时，是不需要改动服务提供者和服务消费者的代码的！==
+
+![SpringCloudCommons](./images/SpringCloudCommons.png)
+
+
+
+1.在 cloud-demo 父工程中添加 spring-cloud-alibaba 的管理依赖
+
+```xml
+<!--SpringCloudAlibaba-->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+    <version>2021.0.4.0</version>
+    <type>pom</type>
+    <scope>import</scope>
+</dependency>
+```
+
+SpringBoot和SpringCloudAlibaba的版本对应关系
+
+![SpringBoot和SpringCloudAlibaba的版本对应关系](./images/SpringBoot和SpringCloudAlibaba的版本对应关系.png)
+
+
+
+2.注释掉 order-service 和 user-service 中原有的 Eureka 依赖，并添加 Nacos 的客户端依赖
+
+```xml
+<!--Nacos客户端-->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+</dependency>
+```
+
+
+
+3.根据 “Nacos官方案例” 可知，我们还需要在**服务消费者**中单独引入**SpringCloudLoadbalancer**，
+
+并做如下配置来启用**SpringCloudAlibaba**提供的负载均衡策略：
+
+![Nacos服务发现需引入spring-cloud-loadbalancer](./images/Nacos服务发现需引入spring-cloud-loadbalancer.png)
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-loadbalancer</artifactId>
+    </dependency>
+</dependencies>
+```
+
+```yaml
+spring:
+  cloud:
+    loadbalancer:
+      nacos:
+        enabled: true
+      ribbon:
+        enabled: false
+```
+
+
+
+4.修改 user-service 和 order-service 中的 application.yml 文件，注释 Eureka 地址，添加 Nacos 地址
+
+```yaml
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848 # Nacos服务端地址
+        username: nacos # Nacos开启权限验证后，需要设置登录用户名
+        password: nacos # Nacos开启权限验证后，需要设置登录密码
+        namespace: f20f0bdd-8b41-41a2-96c8-6aa946f903fc # 设置服务在Nacos中所属的命名空间ID
+        group: stone1 # 设置服务在Nacos中所属的分组
+```
+
+- username 和 password：在安装Nacos的时候，我们开启了Nacos的鉴权功能，所以必须设置这两项，我们的服务才能成功注册到Nacos中。
+- namespace：是 Nacos 针对于企业级开发设计用来针对于不同环境的区分。
+    - 比如正在企业开发时有测试环境、生产环境等其他环境，为了保证不同环境配置实现隔离，提出了namespace的概念！
+    - Nacos 中存在一个默认的命名空间 `public`，所有配置以及服务注册，在没有指定命名空间时都会默认从 `public` 这个命名空间拉取配置以及注册到该命名空间下的注册表中！！！
+    - <span style="color:orange;">**同名的命名空间只能创建一个！**</span>
+    - <span style="color:red;">**服务注册到不同的 namespace 下，服务间无法通过指定服务名进行负载通信！！！**</span>
+    - <span style="color:red;">即服务间如果需要通信，则需要保证其discovery要在一个命名空间下（实际上一般都不会更改服务注册的命名空间）</span>
+
+![Nacos的命名空间](./images/Nacos的命名空间.png)
+
+- group：在 Nacos 中，可以根据业务需求，对不同的服务以及配置进行分组，通过不同的字符串名（分组名）来表示不同的分组。
+    - Nacos 中如果未显示的指明分组名，那么就会默认的划分在DEFAULT_GROUP分组之中！
+    - <span style="color:red;">**Group间的服务仍然是隔离的，即服务注册到不同的分组时，无法通过指定服务名进行负载调用！**</span>
+
+> 前边已经划分了各个区域（`namespace`）了，那还来个分组，是啥意思呢？
+>
+> 简单！零食区中，薯片是放一个柜的吧！！糖是放一个柜的吧！！鲫鱼与鲫鱼是在一起的吧！！猪排与猪排是在一起的吧！ 这便是分组，实际上也是一个更细微的环境隔离机制罢了！！！
+
+[参考文章](https://blog.csdn.net/leilei1366615/article/details/111405644)
+
+==关于 Nacos 的更过配置信息参考：== [Nacos Starter的更多配置项信息](https://github.com/alibaba/spring-cloud-alibaba/wiki/Nacos-discovery) 
+
+![NacosStarter的更多配置](./images/NacosStarter的更多配置.png)
+
+
+
+5.启动测试，<span style="color:red;">在启动项目之前一定要先将 Nacos 服务端 启动起来！！！</span>
+
+![注册到Nacos中的服务](./images/注册到Nacos中的服务.png)
+
+
+
+6.进行服务间的调用  http://localhost:9981/order/1
+
+<span style="color:red;">**注意：**</span>Nacos 和 Eureka 不同，对于服务名称的书写要求很严格，
+
+所以为了保证服务的成功调用，我们要确保代码中调用的服务名称和Nacos中注册的服务名称是一致的。
+
+![保证调用的服务名称和注册的服务名称的一致性](./images/保证调用的服务名称和注册的服务名称的一致性.png)
+
+最终成功调用的结果如下
+
+![Nacos中的服务调用结果](./images/Nacos中的服务调用结果.png)
+
 
 
 ### Nacos服务分级存储模型
