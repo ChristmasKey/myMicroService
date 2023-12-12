@@ -21,6 +21,7 @@ spring:
         password: nacos # Nacos开启权限验证后，需要设置登录密码
         namespace: f20f0bdd-8b41-41a2-96c8-6aa946f903fc # 设置服务在Nacos中所属的命名空间ID
         group: stone1 # 设置服务在Nacos中所属的分组
+        cluster-name: BJ # 配置集群名称，也就是机房位置，例如：HZ 杭州
 mybatis:
   type-aliases-package: com.djn.order.domain
   configuration:
@@ -35,3 +36,7 @@ logging:
 #  client:
 #    service-url: # eureka的地址信息
 #      defaultZone: http://127.0.0.1:10086/eureka/
+
+userService:
+  ribbon:
+    NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
