@@ -1382,17 +1382,35 @@ Nacos 引入”集群“的概念，就是为了<span style="color:blue;">**尽�
 
 #### 为服务设置集群属性
 
+1.修改 application.yml，添加如下内容
+
+```yaml
+spring:
+  cloud:
+    nacos:
+      discovery:
+        cluster-name: HZ # 配置集群名称，也就是机房位置，例如：HZ 杭州
+```
 
 
 
+2.在Nacos控制台可以看到集群变化
+
+![Nacos中的服务实例在不同的集群下](./images/Nacos中的服务实例在不同的集群下.png)
 
 
 
+#### 总结
 
+1.Nacos服务分级存储模型
 
+​	一级是服务，例如 UserService
 
+​	二级是集群，例如杭州或上海
 
+​	三级是实例，例如杭州房的某台部署了UserService实例的服务器
 
+2.如何设置实例的集群属性：参照上文
 
 
 
