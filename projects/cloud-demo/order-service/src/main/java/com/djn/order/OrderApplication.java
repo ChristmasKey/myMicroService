@@ -1,9 +1,11 @@
 package com.djn.order;
 
+import com.djn.order.config.CustomLoadBalancerConfiguration;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
@@ -17,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
  * @version 1.0
  * @since 2023-11-22 16:03
  */
+//@LoadBalancerClient(name = "userService", configuration = CustomLoadBalancerConfiguration.class)
 @MapperScan("com.djn.order.mapper")
 @SpringBootApplication
 public class OrderApplication {

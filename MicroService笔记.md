@@ -1112,6 +1112,261 @@ userservice:
 
 
 
+#### 新版本SpringCloud自定义负载均衡策略
+
+> 2020年前的SpringCloud是采用Ribbon作为负载均衡实现的，
+>
+> 但是2020后采用了LoadBalancer作为替代！
+
+LoadBalancer 默认提供了两种负载均衡策略：
+
+- **RandomLoadBalancer** —— 随机分配策略
+- **RoundRobinLoadBalancer** —— 轮询分配策略（默认）
+
+[参考文章](https://blog.csdn.net/gsls200808/article/details/132603527)
+
+
+
+##### 1.切换 RandomLoadBalancer 策略
+
+①新建配置类 CustomLoadBalancerConfiguration.java
+
+![CustomLoadBalancerConfiguration类](./images/CustomLoadBalancerConfiguration类.png)
+
+（<span style="color:red;">不要加 @Configuration </span>，会导致 `environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME)` 返回 Null，后面调用RestTemplate失败）
+
+```java
+package com.djn.order.config;
+
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.loadbalancer.core.RandomLoadBalancer;
+import org.springframework.cloud.loadbalancer.core.ReactorLoadBalancer;
+import org.springframework.cloud.loadbalancer.core.RoundRobinLoadBalancer;
+import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
+import org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
+
+
+/**
+ * 自定义负载均衡策略配置类
+ */
+public class CustomLoadBalancerConfiguration {
+
+    @Bean
+    public ReactorLoadBalancer<ServiceInstance> randomLoadBalancer(Environment environment,
+                                                                   LoadBalancerClientFactory factory) {
+        String name = environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME);
+
+        // 返回轮询负载均衡策略（默认）
+        //return new RoundRobinLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
+
+        // 返回随机轮询负载均衡策略
+        return new RandomLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
+    }
+}
+```
+
+==[官方文档](https://docs.spring.io/spring-cloud-commons/docs/current/reference/html/#eager-loading-of-loadbalancer-contexts) 中也说明不能直接用 @Configuration==
+
+![官方说明不能用@Configuration](./images/官方说明不能用@Configuration.png)
+
+
+
+②通过在启动类上（也可以在配置类上）添加 @LoadBalancerClient ，可以单独为某一个服务指定负载均衡策略。[参考文章](https://blog.51cto.com/knifeedge/5847505)
+
+其中，**name 或 value** 为需要指定负载均衡策略的服务名称；**configuration** 为我们上面自定义的负载均衡策略配置类
+
+```java
+package com.djn.order;
+
+import com.djn.order.config.CustomLoadBalancerConfiguration;
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.client.RestTemplate;
+
+/**
+ * OrderService启动类
+ */
+@LoadBalancerClient(name = "userService", configuration = CustomLoadBalancerConfiguration.class)
+@MapperScan("com.djn.order.mapper")
+@SpringBootApplication
+public class OrderApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(OrderApplication.class, args);
+    }
+
+
+    /**
+     * 创建RestTemplate并注入Spring
+     */
+    @Bean
+    @LoadBalanced
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+```
+
+另外，我们也可以通过 @LoadBalancerClients 为所有服务指定统一的负载均衡策略。
+
+```java
+@LoadBalancerClients(defaultConfiguration= CustomLoadBalancerConfiguration.class)
+```
+
+最后，我们还可以通过 @LoadBalancerClient 与 @LoadBalancerClients 的组合使用，为多个服务指定统一的负载均衡策略。
+
+```java
+@LoadBalancerClients(value = {
+    @LoadBalancerClient(value = "stores", configuration = StoresLoadBalancerClientConfiguration.class),
+    @LoadBalancerClient(value = "customers", configuration = CustomersLoadBalancerClientConfiguration.class)
+})
+```
+
+其中，**value** 为 @LoadBalancerClient 数组；**defaultConfiguration** 为默认的负载均衡策略配置。
+
+
+
+③可以看到，现在调用 UserService 的负载均衡策略是 **RandomLoadBalancer**
+
+![调用RandomLoadBalancer负载均衡策略](./images/调用RandomLoadBalancer负载均衡策略.png)
+
+
+
+##### 2.使用自定义负载均衡策略
+
+如果我们想自定义策略，可以参考 **RoundRobinLoadBalancer** 类自己实现。例如：调用3次轮换的自定义策略
+
+①创建 CustomLoadBalancer 类，实现自定义的负载均衡逻辑
+
+```java
+package com.djn.order.rule;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.loadbalancer.DefaultResponse;
+import org.springframework.cloud.client.loadbalancer.EmptyResponse;
+import org.springframework.cloud.client.loadbalancer.Request;
+import org.springframework.cloud.client.loadbalancer.Response;
+import org.springframework.cloud.loadbalancer.core.ReactorServiceInstanceLoadBalancer;
+import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+
+/**
+ * 自定义负载均衡策略：每3次调用后轮换
+ */
+public class CustomLoadBalancer implements ReactorServiceInstanceLoadBalancer {
+
+    private static final Log log = LogFactory.getLog(CustomLoadBalancer.class);
+
+    /**
+     * 被调用的次数
+     */
+    private int total = 0;
+
+    /**
+     * 当前提供服务的实例的索引
+     */
+    private int index = 0;
+
+    private ObjectProvider<ServiceInstanceListSupplier> serviceInstanceListSupplierObjectProvider;
+
+    private String serviceId;
+
+    public CustomLoadBalancer(ObjectProvider<ServiceInstanceListSupplier> serviceInstanceListSupplierObjectProvider,
+                              String serviceId) {
+        this.serviceInstanceListSupplierObjectProvider = serviceInstanceListSupplierObjectProvider;
+        this.serviceId = serviceId;
+    }
+
+    @Override
+    public Mono<Response<ServiceInstance>> choose(Request request) {
+        ServiceInstanceListSupplier supplier = serviceInstanceListSupplierObjectProvider.getIfAvailable();
+        assert supplier != null;
+        return supplier.get().next().map(this::getInstanceResponse);
+    }
+
+    private Response<ServiceInstance> getInstanceResponse(List<ServiceInstance> instances) {
+        log.info("进入自定义负载均衡");
+
+        if(instances.isEmpty()) {
+            return new EmptyResponse();
+        }
+
+        log.info("每个服务访问3次后轮换");
+        int size = instances.size();
+
+        ServiceInstance serviceInstance = null;
+
+        while (serviceInstance == null) {
+            System.out.println("======" + total);
+            System.out.println("======" + index);
+            if (total < 3) {
+                serviceInstance = instances.get(index);
+                total++;
+            } else {
+                total = 0;
+                index ++;
+                if (index >= size) {
+                    index = 0;
+                }
+                serviceInstance = instances.get(index);
+            }
+        }
+
+        return new DefaultResponse(serviceInstance);
+    }
+}
+```
+
+②修改 CustomLoadBalancerConfiguration 类，指定我们自定义的负载均衡策略
+
+```java
+/**
+ * 自定义负载均衡策略配置类
+ */
+public class CustomLoadBalancerConfiguration {
+
+    @Bean
+    public ReactorLoadBalancer<ServiceInstance> randomLoadBalancer(Environment environment,
+                                                                   LoadBalancerClientFactory factory) {
+        String name = environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME);
+
+        // 返回轮询负载均衡策略（默认）
+        //return new RoundRobinLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
+
+        // 返回随机轮询负载均衡策略
+        //return new RandomLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
+
+        // 返回自定义负载均衡策略
+        return new CustomLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
+    }
+}
+```
+
+③最终的运行结果如下
+
+![自定义负载均衡策略运行效果1](./images/自定义负载均衡策略运行效果1.png)
+
+
+
+![自定义负载均衡策略运行效果2](./images/自定义负载均衡策略运行效果2.png)
+
+
+
+![自定义负载均衡策略运行效果3](./images/自定义负载均衡策略运行效果3.png)
+
+
+
 ### 懒加载
 
 **饥饿加载**
@@ -1415,6 +1670,10 @@ spring:
 
 
 #### NacosRule负载均衡
+
+
+
+
 
 
 

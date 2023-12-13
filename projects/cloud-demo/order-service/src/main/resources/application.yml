@@ -11,9 +11,7 @@ spring:
   cloud:
     loadbalancer:
       nacos:
-        enabled: true
-      ribbon:
-        enabled: false
+        enabled: true # 手动开启 Nacos 负载均衡
     nacos:
       discovery:
         server-addr: localhost:8848 # Nacos服务端地址
@@ -36,7 +34,3 @@ logging:
 #  client:
 #    service-url: # eureka的地址信息
 #      defaultZone: http://127.0.0.1:10086/eureka/
-
-userService:
-  ribbon:
-    NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
