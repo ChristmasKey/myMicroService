@@ -1515,7 +1515,7 @@ SpringBoot和SpringCloudAlibaba的版本对应关系
 
 3.根据 “Nacos官方案例” 可知，我们还需要在**服务消费者**中单独引入**SpringCloudLoadbalancer**，
 
-并做如下配置来启用**SpringCloudAlibaba**提供的负载均衡策略：
+并做如下配置来启用**SpringCloudAlibaba**提供的Nacos负载均衡策略：
 
 ![Nacos服务发现需引入spring-cloud-loadbalancer](./images/Nacos服务发现需引入spring-cloud-loadbalancer.png)
 
@@ -1669,9 +1669,62 @@ spring:
 
 
 
-#### NacosRule负载均衡
+#### Nacos 负载均衡策略
+
+在“Nacos快速入门”章节中，我们已经知道了可以通过配置文件的方式来启用 Nacos 负载均衡策略 **NacosLoadBalancer** ，
+
+```yaml
+spring:
+  cloud:
+    loadbalancer:
+      nacos:
+        enabled: true
+```
+
+那么这个由 SpringCloud Alibaba 提供的负载均衡策略有什么特点呢？
+
+<span style="color:blue;">**其最大的特点就是：能够让 服务消费者 在调用 服务提供者 时，优先选择同一个集群的服务提供者！**</span>
+
+<span style="color:green;">当同一个集群的服务提供者有多个实例时，又会采用**随机**方式进行负载均衡！</span>
+
+<span style="color:red;">只有当同一个集群中没有可以调用的服务实例时，才会去其他集群进行远程调用。</span>
+
+![启用了Nacos负载均衡策略](./images/启用了Nacos负载均衡策略.png)
+
+除了配置文件的方式，我们还可以采用自定义负载均衡策略配置类的方式来启用 **NacosLoadBalancer**
+
+```java
+/**
+ * 自定义负载均衡策略配置类
+ */
+public class CustomLoadBalancerConfiguration {
+
+    @Bean
+    public ReactorLoadBalancer<ServiceInstance> randomLoadBalancer(Environment environment,
+                                                                   LoadBalancerClientFactory factory,
+                                                                   NacosDiscoveryProperties properties) {
+        String name = environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME);
+
+        // 返回轮询负载均衡策略（默认）
+        //return new RoundRobinLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
+
+        // 返回随机轮询负载均衡策略
+        //return new RandomLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
+
+        // 返回自定义负载均衡策略
+        //return new CustomLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
+
+        // 返回Nacos的负载均衡策略
+        return new NacosLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name, properties);
+    }
+}
+```
+
+==注意点==：我们自定义的负载均衡策略配置类会 <span style="color:red;">**覆盖**</span> application.yml 文件中的 `spring.cloud.loadbalancer.nacos.enabled=true` 属性的效果
 
 
+
+#### 为服务设置权重属性
 
 
 

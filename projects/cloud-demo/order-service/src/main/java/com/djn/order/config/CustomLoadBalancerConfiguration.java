@@ -1,5 +1,7 @@
 package com.djn.order.config;
 
+import com.alibaba.cloud.nacos.NacosDiscoveryProperties;
+import com.alibaba.cloud.nacos.loadbalancer.NacosLoadBalancer;
 import com.djn.order.rule.CustomLoadBalancer;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.loadbalancer.core.RandomLoadBalancer;
@@ -18,7 +20,8 @@ public class CustomLoadBalancerConfiguration {
 
     @Bean
     public ReactorLoadBalancer<ServiceInstance> randomLoadBalancer(Environment environment,
-                                                                   LoadBalancerClientFactory factory) {
+                                                                   LoadBalancerClientFactory factory,
+                                                                   NacosDiscoveryProperties properties) {
         String name = environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME);
 
         // 返回轮询负载均衡策略（默认）
@@ -28,6 +31,9 @@ public class CustomLoadBalancerConfiguration {
         //return new RandomLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
 
         // 返回自定义负载均衡策略
-        return new CustomLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
+        //return new CustomLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
+
+        // 返回Nacos的负载均衡策略
+        return new NacosLoadBalancer(factory.getLazyProvider(name, ServiceInstanceListSupplier.class), name, properties);
     }
 }
