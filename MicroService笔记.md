@@ -1726,8 +1726,26 @@ public class CustomLoadBalancerConfiguration {
 
 #### 为服务设置权重属性
 
+实际部署中会出现这样的场景：
 
+- 服务器设备性能有差异，部分实例所在机器性能较好，另一些较差，我们希望性能好的机器承担更多的用户请求
+
+Nacos 提供了权重配置来控制访问频率，权重越大则访问频率越高。在 Nacos 控制台可以设置实例的权重值：
+
+![Nacos控制台设置服务实例的权重](./images/Nacos控制台设置服务实例的权重.png)
+
+将权重设置为0.1，测试可以发现该服务被访问的频率大大降低了。
+
+OrderService被访问多次，
+
+![OrderService被访问多次](./images/OrderService被访问多次.png)
+
+但是端口号7749的UserService却只被调用了2次！
+
+![UserService7749只被调用了2次](./images/UserService7749只被调用了2次.png)
 
 
 
 ### Nacos环境隔离
+
+TODO
