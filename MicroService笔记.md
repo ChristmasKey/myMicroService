@@ -1546,8 +1546,8 @@ spring:
 spring:
   cloud:
     nacos:
+      server-addr: localhost:8848 # Nacos服务端地址
       discovery:
-        server-addr: localhost:8848 # Nacos服务端地址
         username: nacos # Nacos开启权限验证后，需要设置登录用户名
         password: nacos # Nacos开启权限验证后，需要设置登录密码
         namespace: f20f0bdd-8b41-41a2-96c8-6aa946f903fc # 设置服务在Nacos中所属的命名空间ID
@@ -1748,4 +1748,67 @@ OrderService被访问多次，
 
 ### Nacos环境隔离
 
-TODO
+Nacos 中服务存储和数据存储的最外层都是一个名为 **namespace** 的东西，用来做最外层的隔离。
+
+详见“ Nacos 快速入门”一节的“服务注册与发现”。
+
+
+
+## 注册中心对比
+
+### Nacos细节分析
+
+1、服务消费者拉取服务信息的动作不是**按需执行**的，而是<span style="color:red;">**定时执行**</span>的，这样可以减小注册中心的压力。（==在Eureka中也是如此==）
+
+每隔一定的时间（例如30s），服务消费者会向注册中心拉取一次最新的服务信息，并将它们缓存起来，然后在接下来的一段时间内直接从缓存中获取服务信息，这样就大大减小了注册中心承担的访问压力。
+
+2、在 Nacos 中，服务实例会被划分成 <span style="color:red;">临时实例</span> 和 <span style="color:blue;">非临时实例</span>，两者的**健康检测机制**是不一样的。其中：
+
+- 临时实例采用心跳检测（与Eureka相同），并且当临时实例挂掉时，它会被 Nacos 从列表中剔除。
+- 非临时实例则由 Nacos 主动发请求询问，并且当非临时实例挂掉了，Nacos 会等待其恢复正常。
+
+![Nacos中的临时实例](./images/Nacos中的临时实例.png)
+
+3、在服务信息的拉取方式上，Eureka 与 Nacos 是有区别的
+
+Eureka 的服务信息只会由<span style="color:green;">服务消费者单方面的拉取</span>，这样的信息更新不够及时；
+
+而 Nacos 采用了<span style="color:red;">服务消费者拉取 + 主动推送变更信息</span>二者相结合的方式。
+
+![Nacos注册中心细节分析](./images/Nacos注册中心细节分析.png)
+
+
+
+### 非临时实例配置
+
+服务注册到Nacos时，可以通过下面的配置来注册为非临时实例
+
+```yaml
+spring:
+  cloud:
+    nacos:
+      discovery:
+        ephemeral: false # 设置为非临时实例
+```
+
+我们可以在Nacos控制台中看到如下结果
+
+![非临时实例服务](./images/非临时实例服务.png)
+
+其中端口号7749的服务实例健康状态异常，但是并没有被Nacos从列表中剔除掉。
+
+
+
+### 总结
+
+1.Nacos 与 Eureka 的共同点
+
+- 都支持服务注册和服务拉取
+- 都支持服务提供者心跳方式做健康检测
+
+2.Nacos 与 Eureka 的区别
+
+- Nacos 支持服务端主动检测提供者状态：临时实例采用心跳模式，非临时实例采用主动检测模式
+- 临时实例心跳不正常会被剔除，非临时实例则不会被剔除
+- Nacos 支持服务列表变更的消息推送模式，服务列表更新更及时
+- Nacos 集群默认采用AP方式，当集群中存在非临时实例时，采用CP模式；而 Eureka 采用AP模式
