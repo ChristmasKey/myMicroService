@@ -64,6 +64,11 @@
     </dependencyManagement>
 
     <dependencies>
+        <!--Spring Cloud 不再默认启用 bootstrap 包了，要想启用需要引入依赖-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

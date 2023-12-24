@@ -1819,13 +1819,292 @@ spring:
 
 ### 统一配置管理
 
+现在我们知道，微服务架构的基本原理如下
 
+![微服务架构的基本原理](./images/微服务架构的基本原理.png)
+
+但是随着业务的扩张，服务实例的数量也将增多，部署需要的服务器也将随之增加。此时我们就会遇到一些问题：
+
+<span style="color:red;">我们需要对某个服务的配置文件做一些修改，而这个配置文件关联着数个服务实例，此时我们就不得不逐个实例的调整配置，这将会非常麻烦；</span>
+
+<span style="color:red;">并且，在完成配置调整后我们还需要将这些服务实例逐个重启，这在生产环境下将会带来不小的影响。</span>
+
+为了解决上述的问题，我们就产生了以下需求：
+
+- **配置更改热更新**
+
+那么微服务架构的基本原理就需要增加一些内容
+
+![微服务架构的配置管理服务](./images/微服务架构的配置管理服务.png)
+
+而如果我们同时采用 Nacos 作为配置管理的话，上图又可以进一步演化
+
+![Nacos作为配置管理](./images/Nacos作为配置管理.png)
+
+
+
+#### Nacos创建配置
+
+①来到 Nacos 控制台的配置管理页面
+
+![Nacos配置管理-创建配置](./images/Nacos配置管理-创建配置.png)
+
+②创建一个新的配置（<span style="color:red;">注意：为了和前面的项目保持一致，我们选择在 stoneSpace 命名空间下创建</span>）
+
+![Nacos配置管理-新建配置页](./images/Nacos配置管理-新建配置页.png)
+
+③通过“发布”按钮发布配置
+
+![Nacos配置管理-发布配置](./images/Nacos配置管理-发布配置.png)
+
+④查看配置列表，可以看到我们刚刚新建的配置
+
+![Nacos配置管理-查看配置](./images/Nacos配置管理-查看配置.png)
+
+
+
+#### 微服务获取配置
+
+微服务获取本地配置的流程：
+
+![微服务获取配置的流程](./images/微服务获取配置的流程.png)
+
+微服务要想从 Nacos 中获取配置，就必须要知道 Nacos 的地址。
+
+但是我们现在的 Nacos 地址是配置在服务的本地配置文件中的，这也就意味着服务只有读取了配置才能知道 Nacos 地址，这就产生了矛盾。
+
+因此我们不能把 Nacos 地址放在本地配置文件中，
+
+<span style="color:red;">Spring 提供了一个 bootstrap.yaml 文件，它在项目启动时的优先级要比 application.yaml 文件高很多，所以会在项目启动后被优先读取。</span>
+
+因此我们只需要把 Nacos 地址配置在 bootstrap.yaml 文件中即可。
+
+（注意：与 Nacos 地址 和 配置文件 有关的所有信息都应该配置在 bootstrap.yaml 文件中）
+
+![微服务从Nacos获取配置的流程](./images/微服务从Nacos获取配置的流程.png)
+
+①在父工程中引入依赖，启用 bootstrap 包
+
+```xml
+<!--Spring Cloud 不再默认启用 bootstrap 包了，要想启用需要引入依赖-->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-bootstrap</artifactId>
+</dependency>
+```
+
+②在服务模块中引入 Nacos 的配置管理客户端依赖
+
+```xml
+<!--Nacos配置管理客户端-->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+</dependency>
+```
+
+③在 UserService中的 resource 目录添加一个 <span style="color:red;">bootstrap.yml</span> 文件，这个文件是引导文件，优先级高于 application.yml
+
+- 把 application.yml 中关于 Nacos 的所有配置移到 bootstrap.yml 中；
+
+- <span style="color:red;">以下三个属性组合，指定了服务要从 Nacos 中获取的配置的 **DataID**</span>
+    -  `spring.application.name`
+    -  `spring.profiles.active`
+    - `spring.cloud.nacos.config.file-extension` 
+
+```yaml
+spring:
+  application:
+    name: userservice # user服务的服务名称
+  profiles:
+    active: dev # 项目环境，这里是 dev
+  cloud:
+    nacos:
+      server-addr: localhost:8848 # Nacos服务端地址
+      username: nacos # Nacos开启权限验证后，需要设置登录用户名
+      password: nacos # Nacos开启权限验证后，需要设置登录密码
+      # 配置管理
+      config:
+        file-extension: yaml # 文件后缀名
+        namespace: f20f0bdd-8b41-41a2-96c8-6aa946f903fc # 设置服务配置在Nacos中所属的命名空间ID
+      # 服务发现
+      discovery:
+        namespace: f20f0bdd-8b41-41a2-96c8-6aa946f903fc # 设置服务在Nacos中所属的命名空间ID
+        group: stone1 # 设置服务在Nacos中所属的分组
+        cluster-name: BJ # 配置集群名称，也就是机房位置，例如：HZ 杭州
+        ephemeral: false # 设置为非临时实例
+```
+
+④编写接口去验证我们是否真的从 Nacos 中获取到了配置
+
+```java
+package com.djn.user.controller;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+/**
+ * Name: UserController
+ * Description: 用户Controller
+ * 
+ * @since 2023-11-22 15:27
+ */
+@Slf4j
+@RestController
+@RequestMapping("/user")
+public class UserController {
+
+    ......
+
+    /**
+     * 通过 @Value 注解获取 application.yml 中的配置
+     */
+    @Value("${pattern.dateformat}")
+    private String dateformat;
+
+    /**
+     * 此接口用于验证服务是否从 Nacos 中获取到了配置
+     *
+     * @return java.lang.String
+     * @author SpringStone
+     * @date 2023-12-24 16:55
+     */
+    @GetMapping("/now")
+    public String now() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern(dateformat));
+    }
+
+    ......
+}
+```
+
+接口访问结果如下
+
+![验证服务从Nacos获取配置](./images/验证服务从Nacos获取配置.png)
 
 
 
 ### 配置热更新
 
+通过两种配置方式可以实现 Nacos 配置的热更新：Nacos 中的配置文件变更后，微服务无需重启就可以感知。
 
+#### 方式一：@RefreshScope
+
+在 @Value 注入的变量所在类上添加注解 @RefreshScope
+
+```java
+package com.djn.user.controller;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+/**
+ * Name: UserController
+ * Description: 用户Controller
+ * 
+ * @since 2023-11-22 15:27
+ */
+@Slf4j
+@RestController
+@RequestMapping("/user")
+@RefreshScope
+public class UserController {
+
+    ......
+
+    /**
+     * 通过 @Value 注解获取 application.yml 中的配置
+     */
+    @Value("${pattern.dateformat}")
+    private String dateformat;
+
+    /**
+     * 此接口用于验证服务是否从 Nacos 中获取到了配置
+     *
+     * @return java.lang.String
+     * @author SpringStone
+     * @date 2023-12-24 16:55
+     */
+    @GetMapping("/now")
+    public String now() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern(dateformat));
+    }
+
+    ......
+}
+```
+
+修改 Nacos 中的配置后，我们可以在项目运行控制台中看到如下内容
+
+![配置热更新后服务运行的控制台](./images/配置热更新后服务运行的控制台.png)
+
+
+
+#### 方式二：@ConfigurationProperties
+
+将配置属性注入到自定义的属性类中，即可实现这些配置的热更新
+
+```java
+package com.djn.user.config;
+
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+@Data
+@Component
+@ConfigurationProperties(prefix = "pattern")
+public class PatternProperties {
+    private String dateformat;
+}
+```
+
+随后修改 UserController 中的代码
+
+```java
+    @Resource
+    private PatternProperties properties;
+
+    /**
+     * 此接口用于验证服务是否从 Nacos 中获取到了配置
+     *
+     * @return java.lang.String
+     * @author SpringStone
+     * @date 2023-12-24 16:55
+     */
+    @GetMapping("/now")
+    public String now() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern(properties.getDateformat()));
+    }
+```
+
+
+
+#### 总结
+
+Nacos 配置更改后，微服务可以实现热更新，方式：
+
+①通过 @Value 注解注入，结合 @RefreshScope 来刷新
+
+②通过 @ConfigurationProperties 注入，自动刷新（**推荐**！！！）
+
+注意事项：
+
+- 不是所有的配置都适合放到配置中心的，维护起来比较麻烦
+- 建议将一些关键参数，需要运行时调整到的参数放到 Nacos 配置中心，一般的都是自定义配置
 
 
 

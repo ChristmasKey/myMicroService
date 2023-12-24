@@ -1,14 +1,19 @@
 package com.djn.user.controller;
 
+import com.djn.user.config.PatternProperties;
 import com.djn.user.domain.User;
 import com.djn.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Name: UserController
@@ -24,10 +29,32 @@ import javax.annotation.Resource;
 @Slf4j
 @RestController
 @RequestMapping("/user")
+//@RefreshScope
 public class UserController {
 
     @Resource
     private UserService userService;
+
+    /**
+     * 通过 @Value 注解获取 application.yml 中的配置
+     */
+    //@Value("${pattern.dateformat}")
+    //private String dateformat;
+
+    @Resource
+    private PatternProperties properties;
+
+    /**
+     * 此接口用于验证服务是否从 Nacos 中获取到了配置
+     *
+     * @return java.lang.String
+     * @author SpringStone
+     * @date 2023-12-24 16:55
+     */
+    @GetMapping("/now")
+    public String now() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern(properties.getDateformat()));
+    }
 
     @GetMapping("/{id}")
     public User queryById(@PathVariable("id") Long id) {
