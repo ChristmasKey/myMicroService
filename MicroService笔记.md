@@ -2108,7 +2108,26 @@ Nacos 配置更改后，微服务可以实现热更新，方式：
 
 
 
-### 配置共享
+### 多环境配置共享
+
+> <span style="color:#1bd1a5;">多环境配置共享的实际应用场景</span>
+>
+> 有一些配置属性在开发、测试和生产等环境下的值是一样的。
+>
+> 如果把它们在每个环境的配置文件中都写一遍是比较浪费的，而且将来如果配置发生改动，还需要逐个更改每个配置文件。
+>
+> 于是就产生了多环境配置共享的需求：<span style="color:red;">无论环境怎么变，这个配置都能够被加载。</span>
+
+微服务在启动时会从 Nacos 读取多个配置文件：
+
+- [spring.application.name]-[spring.profiles.active].yaml，例如：userservice-dev.yaml
+- [spring.application.name].yaml，例如：userservice.yaml
+
+<span style="color:blue;">无论 profile 如何变化，[spring.application.name].yaml 这个文件一定会被加载，因此多环境共享配置可以写入这个文件</span>
+
+
+
+
 
 
 
