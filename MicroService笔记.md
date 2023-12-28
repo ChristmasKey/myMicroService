@@ -2125,11 +2125,96 @@ Nacos 配置更改后，微服务可以实现热更新，方式：
 
 <span style="color:blue;">无论 profile 如何变化，[spring.application.name].yaml 这个文件一定会被加载，因此多环境共享配置可以写入这个文件</span>
 
+①在 Nacos 中创建多环境共享配置文件
+
+![创建UserService的多环境共享配置](./images/创建UserService的多环境共享配置.png)
+
+可以看到配置列表中有两条配置记录
+
+![配置管理列表中有两条配置记录](./images/配置管理列表中有两条配置记录.png)
+
+②在 PatternProperties 类中添加 envSharedValue 字段，并编写一个请求接口返回 PatternProperties 对象
+
+![PatternProperties类中添加envSharedValue字段](./images/PatternProperties类中添加envSharedValue字段.png)
+
+```java
+@Resource
+private PatternProperties properties;
+
+@GetMapping("/prop")
+public PatternProperties getProperties() {
+    return properties;
+}
+```
+
+③至此我们就可以启动服务实例，访问接口，验证结果了
+
+我们首先将一个服务实例在 `dev` 环境启动，然后将另一个的启动环境修改为 `test` 启动。
+
+修改环境的方式有两种，一种是修改 `spring.profiles.active` 属性值，还有一种等效的修改方式如下：
+
+![修改服务实例的启动环境](./images/修改服务实例的启动环境.png)
+
+分别访问两个服务实例下的 /user/prop 接口，可以看到两个服务实例都成功读取到了共享配置
+
+![不同环境下的服务实例的接口返回结果](./images/不同环境下的服务实例的接口返回结果.png)
+
+另外，从两个服务实例的启动控制台中也可以看出，它们读取了不同的配置
+
+dev 环境下：
+
+![dev环境服务实例启动时的控制台输出](./images/dev环境服务实例启动时的控制台输出.png)
+
+test 环境下：
+
+![test环境服务实例启动时的控制台输出.png](./images/test环境服务实例启动时的控制台输出.png)
 
 
 
+#### 多配置的优先级
+
+既然一个服务实例在启动时会读取多个配置文件，那么这些配置文件的优先级又是怎样的呢？
+
+假设在一个服务实例的多个配置文件中都存在一个相同的属性，但是它的值不同，那么服务实例最终读取到的值将是哪一个呢？
+
+为了弄清这个问题，我们分别在本地配置、共享配置 和 dev环境配置 中添加如下属性，<span style="color:red;">并在 PatternProperties 类中添加相应字段</span>
+
+```yaml
+pattern:
+  name: {环境名字}
+```
+
+此时启动服务实例，访问接口得到的返回如下
+
+![环境配置优先级验证结果1](./images/环境配置优先级验证结果1.png)
+
+当我们把 dev环境配置 中的属性移除后，再启动服务实例，访问接口得到的返回如下
 
 
+
+![环境配置优先级验证结果2](./images/环境配置优先级验证结果2.png)
+
+最后，我们再把 共享配置 中的属性移除后，再启动服务实例，访问接口得到的返回如下
+
+![环境配置优先级验证结果3.png](./images/环境配置优先级验证结果3.png)
+
+由此可知，多配置的优先级为：<span style="color:#f20c00">服务名-profile.yaml</span> > <span style="color:#0c8918">服务名称.yaml</span> > <span style="color:#4b5cc4">本地配置</span> 
+
+![多环境配置的优先级图解](./images/多环境配置的优先级图解.png)
+
+
+
+#### 总结
+
+微服务会从 Nacos 读取的配置文件：
+
+① [服务名]-[spring.profile.active].yaml ，环境配置
+
+② [服务名].yaml ，默认配置，多环境共享
+
+优先级：
+
+① [服务名]-[环境].yaml > [服务名].yaml > 本地配置
 
 
 

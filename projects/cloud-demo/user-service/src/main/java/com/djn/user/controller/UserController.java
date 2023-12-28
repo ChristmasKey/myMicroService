@@ -44,6 +44,11 @@ public class UserController {
     @Resource
     private PatternProperties properties;
 
+    @GetMapping("/prop")
+    public PatternProperties getProperties() {
+        return properties;
+    }
+
     /**
      * 此接口用于验证服务是否从 Nacos 中获取到了配置
      *
