@@ -2220,6 +2220,46 @@ pattern:
 
 ### 搭建Nacos集群
 
+在企业生产环境中，更强调<span style="color:#ff8c31;">**高可用**</span>，所以 Nacos 一定要做成<span style="color:red;">集群</span>。
+
+[官方文档](https://nacos.io/zh-cn/docs/v2/guide/admin/cluster-mode-quick-start.html)
+
+![官方Nacos集群图](./images/官方Nacos集群图.jpg)
+
+上面是 Nacos 官方给出的集群架构图，我们将其简化一下
+
+![简化的Nacos集群架构图](./images/简化的Nacos集群架构图.png)
+
+图中设置了3台 Nacos 节点，为了保证它们的数据共享又设置了一个<span style="color:#0aa344;">MySQL集群</span>；而后采用 <span style="color:#00e500;">Nginx</span> 负责做请求的负载均衡。
+
+在接下来的案例中，出于设备限制，所以会将 Nacos 节点都部署在一台设备上，MySQL集群也采用 单点 代替。
+
+
+
+#### 搭建案例
+
+> 基本步骤：
+>
+> 1.搭建数据库，初始化数据库表结构
+>
+> 2.下载 Nacos 安装包
+>
+> 3.配置 Nacos
+>
+> 4.启动 Nacos 集群
+>
+> 5.Nginx 反向代理
+
+##### 1.初始化数据库
+
+
+
+
+
+
+
+
+
 
 
 
