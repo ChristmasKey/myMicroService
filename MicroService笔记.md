@@ -2252,13 +2252,81 @@ pattern:
 
 ##### 1.初始化数据库
 
+Nacos 默认数据存储在<span style="color:red;">内嵌数据库Derby</span>中，不属于生产可用的数据库。官方推荐的最佳实践是使用<span style="color:#0aa344;">带有主从的高可用数据库集群</span>。
+
+这里以单点的MySQL数据库来代替讲解。
+
+首先新建一个数据库，命名为 nacos ，而后导入我们下载的 Nacos 包中提供的sql脚本 **mysql-schema.sql** （文件所在目录为 `conf`）。
+
+![Nacos提供的mysql脚本](./images/Nacos提供的mysql脚本.png)
+
+##### 2.配置Nacos
+
+将 Nacos 的 `conf` 目录下的 **cluster.conf.example** 文件重命名为 **cluster.conf** ，然后添加以下内容
+
+```
+127.0.0.1:8845
+127.0.0.1:8846
+127.0.0.1:8847
+```
+
+然后修改 application.properties 文件，添加数据库配置
+
+![Nacos配置文件中关于数据库的配置](./images/Nacos配置文件中关于数据库的配置.png)
+
+```properties
+#*************** Config Module Related Configurations ***************#
+### If use MySQL as datasource:
+### Deprecated configuration property, it is recommended to use `spring.sql.init.platform` replaced.
+# spring.datasource.platform=mysql
+spring.sql.init.platform=mysql
+
+### Count of DB:
+db.num=1
+
+### Connect URL of DB:
+db.url.0=jdbc:mysql://127.0.0.1:3306/nacos?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=UTC+8
+db.user.0=root
+db.password.0=1234
+```
 
 
 
+##### 3.启动Nacos
+
+将 Nacos 目录复制三份，分别命名为：nacos1、nacos2、nacos3
+
+![将Nacos目录复制多个](./images/将Nacos目录复制多个.png)
+
+然后分别修改三个文件夹中的 **application.properties** ，
+
+nacos1：
+
+```properties
+server.port=8845
+```
+
+nacos2：
+
+```properties
+server.port=8846
+```
+
+nacos2：
+
+```properties
+server.port=8847
+```
+
+接着分别启动三个 Nacos 节点
+
+```shell
+startup.cmd
+```
 
 
 
-
+##### 4.Nginx反向代理
 
 
 
