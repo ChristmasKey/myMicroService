@@ -2264,10 +2264,12 @@ Nacos 默认数据存储在<span style="color:red;">内嵌数据库Derby</span>�
 
 将 Nacos 的 `conf` 目录下的 **cluster.conf.example** 文件重命名为 **cluster.conf** ，然后添加以下内容
 
+<span style="color:red;">这里的IP地址不建议写127.0.0.1或localhost！！！</span>
+
 ```
-127.0.0.1:8845
-127.0.0.1:8846
-127.0.0.1:8847
+192.168.0.106:8845
+192.168.0.106:8846
+192.168.0.106:8847
 ```
 
 然后修改 application.properties 文件，添加数据库配置
@@ -2285,7 +2287,7 @@ spring.sql.init.platform=mysql
 db.num=1
 
 ### Connect URL of DB:
-db.url.0=jdbc:mysql://127.0.0.1:3306/nacos?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=UTC+8
+db.url.0=jdbc:mysql://localhost:3306/nacos?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=Asia/Shanghai
 db.user.0=root
 db.password.0=1234
 ```
@@ -2327,6 +2329,39 @@ startup.cmd
 
 
 ##### 4.Nginx反向代理
+
+下载 Nginx 安装包，解压到任意非中文目录下，
+
+![nginx目录](./images/nginx目录.png)
+
+修改 `conf/nginx.conf` 文件，配置如下
+
+```nginx
+upstream nacos-cluster {
+    server 127.0.0.1:8845;
+    server 127.0.0.1:8846;
+    server 127.0.0.1:8847;
+}
+
+server {
+    listen		80;
+    server_name	localhost;
+    
+    location /nacos {
+        proxy_pass http://nacos-cluster;
+    }
+}
+```
+
+==~将以上内容粘贴到http模块中任意一处即可。~==
+
+
+
+
+
+
+
+
 
 
 
