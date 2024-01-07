@@ -2267,10 +2267,13 @@ Nacos 默认数据存储在<span style="color:red;">内嵌数据库Derby</span>�
 <span style="color:red;">这里的IP地址不建议写127.0.0.1或localhost！！！</span>
 
 ```
+# 如果是Nacos2.x版本，集群的端口不建议设为连续的端口号
 192.168.0.106:8845
-192.168.0.106:8846
-192.168.0.106:8847
+192.168.0.106:8855
+192.168.0.106:8864
 ```
+
+
 
 然后修改 application.properties 文件，添加数据库配置
 
@@ -2292,6 +2295,8 @@ db.user.0=root
 db.password.0=1234
 ```
 
+<span style="color:red;">注意：这里的mysql连接url的参数如果出现问题，那么在启动时也可能会出现“No DataSource Set”的报错。比如serverTimezone的时区值设置。</span>
+
 
 
 ##### 3.启动Nacos
@@ -2311,13 +2316,13 @@ server.port=8845
 nacos2：
 
 ```properties
-server.port=8846
+server.port=8855
 ```
 
 nacos2：
 
 ```properties
-server.port=8847
+server.port=8865
 ```
 
 接着分别启动三个 Nacos 节点
@@ -2337,33 +2342,114 @@ startup.cmd
 修改 `conf/nginx.conf` 文件，配置如下
 
 ```nginx
-upstream nacos-cluster {
-    server 127.0.0.1:8845;
-    server 127.0.0.1:8846;
-    server 127.0.0.1:8847;
+http {
+    upstream nacos-cluster {
+        server 127.0.0.1:8845;
+        server 127.0.0.1:8855;
+        server 127.0.0.1:8865;
+    }
+
+    server {
+        listen		8000;
+        server_name	localhost;
+
+        location /nacos {
+            proxy_pass http://nacos-cluster;
+        }
+    }
 }
 
-server {
-    listen		80;
-    server_name	localhost;
+# stream快用于做TCP转发（Nacos2.x版本需要添加下面的配置）
+stream {
+    upstream nacos-cluster {
+        server 127.0.0.1:8845;
+        server 127.0.0.1:8855;
+        server 127.0.0.1:8865;
+    }
     
-    location /nacos {
-        proxy_pass http://nacos-cluster;
+    server {
+        listen 9000;
+        proxy_connect_timeout 20s;
+        proxy_timeout 5m;
+        proxy_pass nacos-cluster;
     }
 }
 ```
 
 ==~将以上内容粘贴到http模块中任意一处即可。~==
 
+保存更改的配置后，进入到 nginx 目录下用命令行启动即可
+
+```
+start nginx.exe
+```
+
+然后打开浏览器访问 http://localhost:8000/nacos
+
+![通过nginx负载均衡访问nacos集群](./images/通过nginx负载均衡访问nacos集群.png)
+
+<h3 style="color:red;">到这里，我们的 Nacos 集群就搭建成功了！</h3>
 
 
 
+##### 5.修改项目中的Nacos地址
+
+修改 **UserService** 的 **bootstrap.yaml** 文件，让其注册到 Nacos 集群中
+
+```yaml
+spring:
+  application:
+    name: userservice # user服务的服务名称
+  profiles:
+    active: dev # 项目环境，这里是 dev
+  cloud:
+    nacos:
+      server-addr: localhost:8000 # Nacos集群地址
+      username: nacos # Nacos开启权限验证后，需要设置登录用户名
+      password: nacos # Nacos开启权限验证后，需要设置登录密码
+      config:
+        file-extension: yaml # 文件后缀名
+```
+
+随后启动项目，然后我们就可以在Nacos集群的控制台中看到注册进来的服务
+
+![注册到Nacos集群的服务](./images/注册到Nacos集群的服务.png)
+
+然后我们再试试在Nacos集群控制台中添加一条配置 userservice-dev.yaml
+
+![在Nacos集群控制台中添加一条配置](./images/在Nacos集群控制台中添加一条配置.png)
+
+添加成功以后我们可以在 MySQL 数据库中的 **config_info** 表中看到这条记录
+
+![在MySQL中查看添加的配置记录](./images/在MySQL中查看添加的配置记录.png)
+
+我们可以尝试去访问一下接口 http://localhost:8864/user/prop，看看服务是否能够读取到配置
+
+![服务读取Nacos集群中的配置](./images/服务读取Nacos集群中的配置.png)
 
 
 
+##### 6.Nacos2.x的注意点
 
+[参考文章](https://blog.csdn.net/weixin_55658418/article/details/131696615)
 
+Nacos2.x最主要的变化就是<span style="color:red;">**新增了几个端口**</span>
 
+一个是Nacos主端口+1000（比如9848），该端口用于<span style="color:red;">**Nacos客户端gRPC请求服务端**</span>，
+
+另外两个分别是主端口+1001和-1000，都是用于<span style="color:red;">**服务端之间的请求**</span>。
+
+> 详细参考官方文档：[Nacos 2.0.0 兼容性文档](https://nacos.io/zh-cn/docs/v2/upgrading/2.0.0-compatibility.html)
+
+<h3>需要注意的点</h3>
+
+根据上面的点，总共要注意这么几点
+
+- Nacos服务端部署时，端口至少大于1000
+- Nacos集群部署时，假设是在同一网段内，端口不能连续
+- 如果是要做 VIP/Nginx 的话，Nginx还要额外监听源端口+1000，因为客户端还需要源端口+1000用于与服务端进行gRPC请求。
+
+==VIP：Virtual IP Address==
 
 
 
