@@ -2455,7 +2455,69 @@ Nacos2.x最主要的变化就是<span style="color:red;">**新增了几个端口
 
 ## Feign远程调用
 
-1111
+### Feign替代RestTemplate
+
+<span style="color:red;">RestTemplate方式调用存在的问题</span>
+
+先来看我们以前利用RestTemplate发起远程调用的代码
+
+```java
+String url = "http://userservice/user/" + order.getUserId();
+User user = restTemplate.getForObject(url, User.class);
+```
+
+存在下面的问题：
+
+- 代码可读性差，编程体验不统一
+- 参数复杂的URL难以维护
+
+
+
+#### Feign的介绍
+
+Feign是一个声明式的http客户端，官方地址：https://github.com/OpenFeign/feign/
+
+其作用就是帮助我们<span style="color:#1bd1a5;">优雅</span>的实现http请求的发送，解决RestTemplate存在的问题。
+
+![Feign官方简介](./images/Feign官方简介.png)
+
+
+
+#### 定义和使用Feign客户端
+
+使用Feign的步骤如下
+
+1.引入依赖
+
+```xml
+```
+
+2.在OrderService的启动类添加注解开启Feign的功能
+
+```java
+```
+
+
+
+
+
+
+
+### 自定义配置
+
+
+
+
+
+### Feign使用优化
+
+
+
+
+
+### 最佳实践
+
+
 
 
 
