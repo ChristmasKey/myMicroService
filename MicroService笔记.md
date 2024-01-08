@@ -2487,35 +2487,242 @@ Feign是一个声明式的http客户端，官方地址：https://github.com/Open
 
 使用Feign的步骤如下
 
-1.引入依赖
+##### 1.引入依赖
 
 ```xml
+<!--Feign-->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
 ```
 
-2.在OrderService的启动类添加注解开启Feign的功能
+##### 2.开启注解
+
+在OrderService的启动类添加注解开启Feign的功能
 
 ```java
+@EnableFeignClients
+@MapperScan("com.djn.order.mapper")
+@SpringBootApplication
+public class OrderApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(OrderApplication.class, args);
+    }
+}
 ```
 
+##### 3.编写Feign客户端
 
+主要是基于SpringMVC的注解来声明远程调用的信息，比如：
 
+- 服务名称：userservice
+- 请求方式：GET
+- 请求路径：/user/{id}
+- 请求参数：Long id
+- 返回值类型：User
 
+```java
+package com.djn.order.clients;
+
+import com.djn.order.domain.User;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+/**
+ * UserService的请求客户端
+ */
+@FeignClient("userservice")
+public interface UserClient {
+
+    @GetMapping("/user/{id}")
+    User findById(@PathVariable("id") Long id);
+}
+```
+
+##### 4.注入并调用Feign客户端
+
+```java
+@Resource
+private UserClient userClient;
+
+@Override
+public Order queryOrderById(Long orderId) {
+    //1.查询订单
+    Order order = orderMapper.findById(orderId);
+    //2.用 Feign 发起远程调用
+    User user = userClient.findById(order.getUserId());
+    //3.封装User到Order
+    order.setUser(user);
+    //4.返回
+    return order;
+}
+```
+
+##### 5.启动服务并调用接口
+
+可以看到 Feign <span style="color:red;">不仅实现了远程调用，而且还实现了负载均衡</span>。
+
+![利用Feign发起远程调用](./images/利用Feign发起远程调用.png)
+
+两个UserService实例都被远程调用了
+
+![Feign实现了负载均衡](./images/Feign实现了负载均衡.png)
+
+我们点进Feign的依赖文件就可以看到 Feign引入了 SpringCloud LoadBalancer
+
+![Feign引入了SpringCloudLoadBalancer](./images/Feign引入了SpringCloudLoadBalancer.png)
 
 
 
 ### 自定义配置
 
+Feign 可以通过自定义配置来覆盖默认配置，可以修改的配置如下：
 
+![Feign的可配置属性](./images/Feign的可配置属性.png)
+
+日志级别说明
+
+- NONE：没有任何日志（默认）
+- BASIC：当Feign发起一次HTTP请求时，日志会记录请求的起止时间、耗时时长等一些基本信息
+- HEADERS：除了请求的基本信息以外，日志还会记录请求头和响应头的信息
+- FULL：除了请求基本信息、头信息以外，日志还会记录请求体和响应体的信息，是最完整的日志记录
+
+
+
+#### 配置Feign日志的两种方式
+
+方式一：配置文件方式
+
+①全局生效
+
+```yaml
+feign:
+  client:
+    config:
+      default: # 这里用 default 就是全局配置，如果是写服务名称，则是针对某个微服务的配置
+        loggerLevel: FULL # 日志级别
+```
+
+②局部生效
+
+```yaml
+feign:
+  client:
+    config:
+      userservice: # 这里用 default 就是全局配置，如果是写服务名称，则是针对某个微服务的配置
+        loggerLevel: FULL # 日志级别
+```
+
+![Full级别的Feign日志](./images/Full级别的Feign日志.png)
+
+
+
+方式二：Java代码方式，需要先声明一个Bean
+
+```java
+public class FeignClientConfiguration {
+    @Bean
+    public Logger.Level feignLogLevel() {
+        return Logger.Level.BASIC;
+    }
+}
+```
+
+①全局配置
+
+```java
+@EnableFeignClients(defaultConfiguration = FeignClientConfiguration.class)
+```
+
+②局部配置
+
+```java
+@FeignClient(value = "userservice", configuration = DefaultFeignConfiguration.class)
+```
 
 
 
 ### Feign使用优化
 
+Feign底层的客户端实现
 
+- URLConnection：默认实现，不支持连接池
+- Apache HttpClient：支持连接池（优化选择一）
+- OKHttp：支持连接池（优化选择二）
+
+
+
+因此优化Feign的性能主要包括：
+
+①使用连接池代替默认的URLConnection
+
+②日志级别，最好用 basic 或 none
+
+
+
+#### 连接池配置
+
+Feign 添加 HttpClient 的支持
+
+##### ①引入依赖
+
+```xml
+<!--Feign性能优化：HttpClient（支持连接池）-->
+<dependency>
+    <groupId>io.github.openfeign</groupId>
+    <artifactId>feign-httpclient</artifactId>
+</dependency>
+```
+
+##### ②配置连接池
+
+```yaml
+feign:
+  httpclient:
+    enabled: true # 开启 Feign 对 HttpClient 的支持
+    max-connections: 200 # 最大的连接数
+    max-connections-per-route: 50 # 每个路径的最大连接数
+```
 
 
 
 ### 最佳实践
+
+==企业在使用 Feign 的过程中，各种踩坑，最后总结出了一套相对比较好的实用方式。==
+
+#### 方式一：继承
+
+<span style="color:red;">给消费者的 FeignClient 和提供者的 Controller 定义统一的父接口作为标准。</span>
+
+- 会造成服务紧耦合
+- 父接口参数列表中的映射不会被继承
+
+![Feign最佳实践一：继承](./images/Feign最佳实践一：继承.png)
+
+
+
+#### 方式二：抽取
+
+<span style="color:red;">将 FeignClient 抽取为独立的模块，并且把接口有关的POJO、默认的Feign配置都放到这个模块中，提供给所有消费者使用。</span>
+
+- 有些服务可能只需要用到部分方法，却不得不将所有方法都引入进来，这显然有些多余
+
+![Feign最佳实践二：抽取](./images/Feign最佳实践二：抽取.png)
+
+实现步骤如下：
+
+1.首先创建一个 module ，命名为 feign-api ，然后引入 feign 的 starter 依赖
+
+2.将  OrderService 中编写的 UserClient、User、DefaultFeignConfiguration 都复制到 feign-api 项目中
+
+3.在 OrderService 中引入 feign-api 依赖
+
+4.修改 OrderService 中的所有与上述三个组件有关的 import 部分，改成导入 feign-api 中的包
+
+5.重启测试
 
 
 

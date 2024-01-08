@@ -1,6 +1,7 @@
 package com.djn.order.domain;
 
 import lombok.Data;
+import com.djn.feign.domain.User;
 
 /**
  * Name: Order
