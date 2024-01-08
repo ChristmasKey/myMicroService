@@ -1,5 +1,6 @@
 package com.djn.order;
 
+import com.djn.feign.clients.UserClient;
 import com.djn.order.config.CustomLoadBalancerConfiguration;
 // import com.djn.order.config.DefaultFeignConfiguration;
 import com.djn.feign.config.DefaultFeignConfiguration;
@@ -22,7 +23,7 @@ import org.springframework.web.client.RestTemplate;
  * @version 1.0
  * @since 2023-11-22 16:03
  */
-@EnableFeignClients(defaultConfiguration = DefaultFeignConfiguration.class)
+@EnableFeignClients(defaultConfiguration = DefaultFeignConfiguration.class, clients = {UserClient.class})
 //@LoadBalancerClient(name = "userService", configuration = CustomLoadBalancerConfiguration.class)
 @MapperScan("com.djn.order.mapper")
 @SpringBootApplication

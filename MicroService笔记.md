@@ -2362,9 +2362,9 @@ http {
 # stream快用于做TCP转发（Nacos2.x版本需要添加下面的配置）
 stream {
     upstream nacos-cluster {
-        server 127.0.0.1:8845;
-        server 127.0.0.1:8855;
-        server 127.0.0.1:8865;
+        server 127.0.0.1:9845;
+        server 127.0.0.1:9855;
+        server 127.0.0.1:9865;
     }
     
     server {
@@ -2712,7 +2712,7 @@ feign:
 
 ![Feign最佳实践二：抽取](./images/Feign最佳实践二：抽取.png)
 
-实现步骤如下：
+**实现步骤如下：**
 
 1.首先创建一个 module ，命名为 feign-api ，然后引入 feign 的 starter 依赖
 
@@ -2724,10 +2724,91 @@ feign:
 
 5.重启测试
 
+<span style="color:#f20c00;">**当定义的 FeignClient 不在 SpringBootApplication 的扫描包范围时，这些 FeignClient 无法使用。有两种方式解决：**</span>
 
+方式一：指定 FeignClient 所在包
+
+```java
+@EnableFeignClients(basePackages = "com.djn.feign.clients")
+```
+
+方式二：指定 FeignClient 字节码
+
+```java
+@EnableFeignClients(clients = {UserClient.class})
+```
 
 
 
 ## Gateway服务网关
 
-1111
+为什么需要网关
+
+网关功能
+
+- 身份认证和权限校验
+- 服务路由、负载均衡
+- 请求限流
+
+![网关的功能](./images/网关的功能.png)
+
+在 Spring Cloud 中网关的实现包括两种：
+
+- gateway
+- zuul
+
+Zuul 是基于 Servlet 的实现，属于阻塞式编程；而 SpringCloud Gateway 则是基于 Spring5 中提供的 WebFlux ，属于响应式编程的实现，具备更好的性能。
+
+
+
+### Gateway快速入门
+
+#### 搭建网关服务
+
+1.创建新的 Module ，引入 SpringCloud Gateway 的依赖 和 Nacos 的服务发现依赖
+
+```xml
+<dependencies>
+    <!--Nacos服务注册发现依赖-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+    </dependency>
+    <!--网关Gateway依赖-->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+</dependencies>
+```
+
+2.编写路由配置及 Nacos 地址
+
+
+
+
+
+
+
+### 断言工厂
+
+
+
+
+
+### 过滤器工厂
+
+
+
+
+
+### 全局过滤器
+
+
+
+
+
+### 跨域问题
+
+
+
