@@ -2779,36 +2779,386 @@ Zuul 是基于 Servlet 的实现，属于阻塞式编程；而 SpringCloud Gatew
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-starter-gateway</artifactId>
     </dependency>
+    <!--
+        SpringCloud2021弃用了Ribbon，
+        因此Alibaba在2021版本Nacos中删除了Ribbon的jar包，
+        因此无法通过lb路由指定到微服务，会出现503的情况，
+        所以需要导入下面的依赖
+    -->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-loadbalancer</artifactId>
+    </dependency>
 </dependencies>
 ```
 
-2.编写路由配置及 Nacos 地址
+2.编写路由配置及 Nacos 地址，创建 application.yml 文件，并添加以下配置
+
+```yaml
+server:
+  port: 10010 # 网关端口
+spring:
+  application:
+    name: gateway # 服务名称
+  cloud:
+    nacos:
+      server-addr: localhost:8848 # Nacos服务端地址
+      username: nacos
+      password: nacos
+      discovery:
+        namespace: 17b272d4-a486-40b1-a5a5-01503b438645 # 设置服务在Nacos中所属的命名空间ID
+        group: stone1 # 设置服务在Nacos中所属的分组
+        cluster-name: BJ # 配置集群名称，也就是机房位置，例如：HZ 杭州
+    gateway:
+      routes: # 网关路由配置
+        - id: user-service # 路由id，自定义，只要唯一即可
+          # uri: http://127.0.0.1:8081 # 路由的目标地址 http就是固定地址
+          uri: lb://userService # 路由的目标地址 lb就是负载均衡（LoadBalancer）,后面跟服务名称
+          predicates: # 路由断言，也就是判断“请求是否符合路由规则”的条件
+            - Path=/user/** # 这个是按照路径匹配，只要以 /user/ 开头就符合要求
+        - id: order-service
+          uri: lb://orderService
+          predicates:
+            - Path=/order/**
+```
+
+3.创建启动类 `GatewayApplication.java`
+
+```java
+package com.djn.gateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class GatewayApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(GatewayApplication.class, args);
+    }
+}
+```
+
+4.随后启动服务和网关，并尝试通过网关去访问服务接口
+
+http://localhost:10010/user/1
+
+http://localhost:10010/order/1
 
 
 
+网关工作流程
 
+![网关的工作流程](./images/网关的工作流程.png)
+
+
+
+#### 总结
+
+网关搭建步骤：
+
+1.创建项目，引入 Nacos 服务发现 和 gateway 依赖，如果是 SpringCloud 2020 以后的版本还需要引入 loadbalancer 依赖
+
+2.配置 application.yml ，包括服务基本信息、Nacos地址、路由
+
+路由配置包括：
+
+1.路由id：路由的唯一标识
+
+2.路由目标（uri）：路由的目标地址，http代表固定地址，lb代表根据服务名负载均衡
+
+3.路由断言（predicates）：判断路由的规则
+
+<span style="color:red;">4.路由过滤器（filters）：对请求或响应做处理</span>
 
 
 
 ### 断言工厂
 
+路由断言工厂：Route Predicate Factory
 
+- 我们在配置文件中写的断言规则只是字符串，这些字符串会被 Predicate Factory 读取并处理，转变为路由判断的条件
+- 例如 Path=/user/** 是按照路径匹配，这个规则是由 `org.springframework.cloud.gateway.handler.predicate.PathRoutePredicateFactory` 类来处理的
+- 像这样的断言工厂在 SpringCloud Gateway 中还有十几个
+
+![Spring提供的断言工厂](./images/Spring提供的断言工厂.png)
+
+[官方参考文档](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#gateway-request-predicates-factories)
+
+![断言工厂的官方文档](./images/断言工厂的官方文档.png)
+
+
+
+#### 案例
+
+例如，我们尝试在 OrderService 路由下加上 **After** 断言
+
+```yaml
+- id: order-service
+  uri: lb://orderService
+  predicates:
+  - Path=/order/**
+  - After=2037-01-20T17:42:47.789-07:00[America/Denver] # 表示只允许2037年1月20日 17:42:47之后访问的请求通过
+```
+
+随后重启网关服务，并尝试访问 http://localhost:10010/order/1，会发现访问结果 404
+
+![添加After断言后访问服务网关](./images/添加After断言后访问服务网关.png)
 
 
 
 ### 过滤器工厂
 
+GatewayFilter 是网关中提供的一种过滤器，可以对进入网关的请求和微服务返回的响应做处理：
 
+![GatewayFilter](./images/GatewayFilter.png)
+
+[官方参考文档](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#gatewayfilter-factories)
+
+![Spring提供的过滤器工厂](./images/Spring提供的过滤器工厂.png)
+
+在路由断言工厂下面，就是过滤器工厂
+
+![过滤器工厂的官方文档.png](./images/过滤器工厂的官方文档.png)
+
+
+
+#### 案例
+
+给所有进入 UserService 的请求添加一个请求头：Truth = Spring Stone is My Nick Name
+
+实现方式：
+
+首先，在 Gateway 中修改 application.yml 文件，给 UserService 的路由添加路由过滤器
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes: # 网关路由配置
+        - id: user-service
+          uri: lb://userService
+          predicates:
+            - Path=/user/**
+          filters: # 过滤器
+            - AddRequestHeader=Truth, Spring Stone is My Nick Name
+```
+
+然后，我们修改 UserService 的代码，去接收一下请求头参数
+
+```java
+@GetMapping("/{id}")
+public User queryById(@PathVariable("id") Long id, @RequestHeader(value = "Truth", required = false) String truth) {
+    System.out.println("truth: " + truth);
+    return userService.queryById(id);
+}
+```
+
+随后重启 UserService 服务和服务网关 Gateway，访问 http://localhost:10010/user/1，并查看 UserService 的控制台输出
+
+![Gateway过滤器工厂案例控制台输出](./images/Gateway过滤器工厂案例控制台输出.png)
+
+==思考：如何给所有的微服务请求都设置一个如上的请求头？==
+
+<span style="color:red;">如果要对所有的路由都生效，则可以将过滤器工厂写到 default 下。</span>
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes: # 网关路由配置
+        - id: user-service
+          uri: lb://userService
+          predicates:
+            - Path=/user/**
+        - id: order-service
+          uri: lb://orderService
+          predicates:
+            - Path=/order/**
+      default-filters: # 默认过滤器，会对所有的路由请求都生效
+        - AddRequestHeader=Truth, Spring Stone is My Nick Name # 添加请求头
+```
 
 
 
 ### 全局过滤器
 
+全局过滤器的作用也是处理一切进入网关的请求和微服务响应，与**GatewayFilter**的作用一样。
 
+区别在于GatewayFilter通过配置定义，处理逻辑是固定的；而GlobalFilter的逻辑需要自己写代码实现。
+
+定义方式就是实现**GlobalFilter**接口。
+
+![Gateway提供的GlobalFilter接口](./images/Gateway提供的GlobalFilter接口.png)
+
+
+
+#### 案例
+
+需求：定义全局过滤器，拦截请求，判断请求的参数是否满足下面条件
+
+- 参数中是否有 authorization
+- authorization 参数值是否为 admin
+
+如果同时满足则放行，否则进行拦截
+
+实现代码如下
+
+```java
+package com.djn.gateway.filters;
+
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+// @Order 注解的作用：定义过滤器的执行顺序，设置的数字越小，过滤器的优先级越高，执行顺序也就越靠前
+// @Order(-1)
+@Component
+public class AuthorizeFilter implements GlobalFilter, Ordered {
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        // 1.获取请求参数
+        ServerHttpRequest request = exchange.getRequest();
+        MultiValueMap<String, String> params = request.getQueryParams();
+        // 2.获取参数中的 authorization 参数
+        String auth = params.getFirst("authorization");
+        // 3.判断参数值是否等于 admin
+        if ("admin".equals(auth)) {
+            // 4.是，放行
+            return chain.filter(exchange);
+        }
+        // 5.否，拦截
+        // 5.1.设置状态码
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        // 5.2.拦截请求
+        return exchange.getResponse().setComplete();
+    }
+
+    /*
+    通过实现Ordered接口的getOrder()方法，可以达到与@Order注解相同的效果
+     */
+    @Override
+    public int getOrder() {
+        return -1;
+    }
+}
+```
+
+重启服务网关，并带 authorization 参数访问 http://localhost:10010/user/1?authorization=admin
+
+![添加全局过滤器后的访问结果](./images/添加全局过滤器后的访问结果.png)
+
+#### 过滤器执行顺序
+
+请求进入网关会碰到三类过滤器：当前路由的过滤器、DefaultFilter、GlobalFilter。
+
+请求路由后，会将当前路由过滤器和DefaultFilter、GlobalFilter，合并到一个过滤器链（集合）中，排序后依次执行每个过滤器。
+
+![过滤器执行顺序](./images/过滤器执行顺序.png)
 
 
 
 ### 跨域问题
 
+跨域：域名不一致就是跨域，主要包括
+
+- 域名不同：www.taobao.com 和 www.taobao.org 和 www.jd.com 和 miaosha.jd.com
+- 域名相同，端口不同：localhost:8080 和 localhost:8081
+
+<span style="color:red;">跨域问题：浏览器禁止请求的发起者与服务端发生跨域Ajax请求，请求被浏览器拦截的问题</span>
+
+解决方案：CORS
+
+网关处理跨域问题采用的同样是CORS方案，并且只需要简单配置即可实现
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      #...
+      globalcors: # 全局的跨域处理
+        add-to-simple-url-handler-mapping: true # 解决 options 请求被网关拦截的问题
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: # 允许哪些网站的跨域请求
+              - "http://localhost:8090"
+              - "http://www.leyou.com"
+            allowedMethods: # 允许的跨域Ajax的请求方式
+              - "GET"
+              - "POST"
+              - "DELETE"
+              - "PUT"
+              - "OPTIONS"
+            allowedHeaders: "*" # 允许在请求中携带的头信息
+            allowedCredentials: true # 是否允许携带Cookie
+            maxAge: 360000 # 这次跨域检测的有效期
+```
+
+我们尝试去用一个简单的页面来模拟一下跨域请求的情景，以此来验证我们的配置是否能够生效
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <pre>
+        spring:
+            cloud:
+                gateway:
+                #...
+                globalcors: # 全局的跨域处理
+                    add-to-simple-url-handler-mapping: true # 解决 options 请求被网关拦截的问题
+                    cors-configurations:
+                    '[/**]':
+                        allowedOrigins: # 允许哪些网站的跨域请求
+                        - "http://localhost:8090"
+                        - "http://www.leyou.com"
+                        allowedMethods: # 允许的跨域Ajax的请求方式
+                        - "GET"
+                        - "POST"
+                        - "DELETE"
+                        - "PUT"
+                        - "OPTIONS"
+                        allowedHeaders: "*" # 允许在请求中携带的头信息
+                        allowedCredentials: true # 是否允许携带Cookie
+                        maxAge: 360000 # 这次跨域检测的有效期
+    </pre>
+</body>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+    axios.get("http://localhost:10010/user/1?authorization=admin")
+    .then(resp => console.log(resp.data))
+    .catch(err => console.log(err))
+</script>
+</html>
+```
+
+我们尝试在VSCode中利用 **live-server** 将这个页面在 localhost:8090 地址运行
+
+![模拟跨域请求的前端页面](./images/模拟跨域请求的前端页面.png)
+
+当我们没有配置跨域处理时，页面的访问结果是这样的
+
+![无跨域处理的页面访问结果](./images/无跨域处理的页面访问结果.png)
+
+当我们配置了跨域处理后，页面的访问结果是这样的，可以看出我们的跨域处理配置确实生效了
+
+![有跨域处理的页面访问结果](./images/有跨域处理的页面访问结果.png)
 
 
+
+## TODO
+
+https://www.bilibili.com/video/BV1LQ4y127n4/?p=42&spm_id_from=pageDriver&vd_source=71b23ebd2cd9db8c137e17cdd381c618

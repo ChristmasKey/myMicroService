@@ -28,6 +28,16 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway</artifactId>
         </dependency>
+        <!--
+            SpringCloud2021弃用了Ribbon，
+            因此Alibaba在2021版本Nacos中删除了Ribbon的jar包，
+            因此无法通过lb路由指定到微服务，会出现503的情况，
+            所以需要导入下面的依赖
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-loadbalancer</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

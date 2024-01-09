@@ -1,0 +1,46 @@
+server:
+  port: 10010 # 网关端口
+spring:
+  application:
+    name: gateway # 服务名称
+  cloud:
+    nacos:
+      server-addr: localhost:8848 # Nacos服务端地址
+      username: nacos
+      password: nacos
+      discovery:
+        namespace: 17b272d4-a486-40b1-a5a5-01503b438645 # 设置服务在Nacos中所属的命名空间ID
+        group: stone1 # 设置服务在Nacos中所属的分组
+        cluster-name: BJ # 配置集群名称，也就是机房位置，例如：HZ 杭州
+    gateway:
+      routes: # 网关路由配置
+        - id: user-service # 路由id，自定义，只要唯一即可
+          # uri: http://127.0.0.1:8081 # 路由的目标地址 http就是固定地址
+          uri: lb://userService # 路由的目标地址 lb就是负载均衡（LoadBalancer）,后面跟服务名称
+          predicates: # 路由断言，也就是判断“请求是否符合路由规则”的条件
+            - Path=/user/** # 这个是按照路径匹配，只要以 /user/ 开头就符合要求
+#          filters:
+#            - AddRequestHeader=Truth, Spring Stone is My Nick Name
+        - id: order-service
+          uri: lb://orderService
+          predicates:
+            - Path=/order/**
+#            - After=2037-01-20T17:42:47.789-07:00[America/Denver]
+      default-filters:
+        - AddRequestHeader=Truth, Spring Stone is My Nick Name
+#      globalcors: # 全局的跨域处理
+#        add-to-simple-url-handler-mapping: true # 解决 options 请求被网关拦截的问题
+#        cors-configurations:
+#          '[/**]':
+#            allowedOrigins: # 允许哪些网站的跨域请求
+#              - "http://localhost:8090"
+#              - "http://www.leyou.com"
+#            allowedMethods: # 允许的跨域Ajax的请求方式
+#              - "GET"
+#              - "POST"
+#              - "DELETE"
+#              - "PUT"
+#              - "OPTIONS"
+#            allowedHeaders: "*" # 允许在请求中携带的头信息
+#            allowedCredentials: true # 是否允许携带Cookie
+#            maxAge: 360000 # 这次跨域检测的有效期
