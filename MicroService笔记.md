@@ -3159,6 +3159,85 @@ spring:
 
 
 
-## TODO
+## Docker
 
-https://www.bilibili.com/video/BV1LQ4y127n4/?p=42&spm_id_from=pageDriver&vd_source=71b23ebd2cd9db8c137e17cdd381c618
+<h4>项目部署的问题</h4>
+
+大型项目组件较多，运行环境也较为复杂，部署时会遇到一些问题：
+
+- 依赖关系复杂，容易出现兼容性问题（项目部署时需要安装各种运行环境）
+- 开发、测试、生产环境有差异
+
+![项目部署时需要安装各种运行环境](./images/项目部署时需要安装各种运行环境.png)
+
+<span style="color:red;">Docker如何解决依赖的兼容问题？</span>
+
+- 将应用的Libs（函数库）、Deps（依赖）、配置与应用一起打包
+- 将每个应用放到一个隔离**容器**去运行，避免互相干扰
+
+![Docker解决依赖兼容问题](./images/Docker解决依赖兼容问题.png)
+
+<span style="color:red;">Docker如何解决“不同环境的操作系统不同”的问题？</span>
+
+操作系统的结构：所有的**Linux内核操作系统**都可以被分为两层
+
+- 内核 与硬件交互，提供操作硬件的指令
+- 系统应用 封装内核指令为函数，便于程序员调用，用户程序基于系统函数库实现功能
+
+
+
+![操作系统的结构](./images/操作系统的结构.png)
+
+不同版本的Linux操作系统都是基于Linux内核，只是系统应用不同，提供的函数库有差异（以Ubuntu和CentOS为例）
+
+![不同版本的Linux操作系统的区别](./images/不同版本的Linux操作系统的区别.png)
+
+Docker将用户程序与所需要调用的系统（如Ubuntu）函数库一起打包
+
+
+
+
+
+
+
+
+
+<h4>什么是Docker？</h4>
+
+
+
+<h4>Docker和虚拟机的区别</h4>
+
+
+
+<h4>Docker架构</h4>
+
+
+
+### 安装Docker
+
+
+
+### Docker的基本操作
+
+
+
+
+
+### DockerFile自定义镜像
+
+
+
+
+
+### Docker-Compose
+
+
+
+
+
+### Docker镜像服务
+
+
+
+123
