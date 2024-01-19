@@ -3192,21 +3192,49 @@ spring:
 
 ![不同版本的Linux操作系统的区别](./images/不同版本的Linux操作系统的区别.png)
 
-Docker将用户程序与所需要调用的系统（如Ubuntu）函数库一起打包
+<span style="color:#f20c00;">**Docker将用户程序与所需要调用的系统（如Ubuntu）函数库一起打包<br>Docker运行到不同操作系统时，直接基于打包的库函数，借助于操作系统的Linux内核来运行**</span>
+
+![Docker在不同的Linux系统上运行的原理](./images/Docker在不同的Linux系统上运行的原理.png)
+
+<h4>总结</h4>
+
+Docker如何解决大型项目依赖关系复杂，不同组件依赖的兼容性问题？
+
+- Docker允许开发中将应用、依赖、函数库、配置一起<span style="color:red;">**打包**</span>，形成可移植镜像
+- Docker应用运行在容器中，使用沙箱机制，相互<span style="color:red;">**隔离**</span>
+
+Docker如何解决开发、测试、生产环境有差异的问题
+
+- Docker镜像中包含完整运行环境，包括系统函数库，仅依赖系统的Linux内核，因此可以在任意Linux操作系统上运行
 
 
 
+### 什么是Docker
 
+<span style="color:#2697ed;">**Docker是一个快速交付应用、运行应用的技术**</span>
 
+1、可以将程序及其依赖、运行环境一起打包为一个镜像，可以迁移到任意Linux操作系统
 
+2、运行时利用沙箱机制形成隔离容器，各个应用互不干扰
 
-
-
-<h4>什么是Docker？</h4>
+3、启动、移除都可以通过一行命令完成，方便快捷
 
 
 
 <h4>Docker和虚拟机的区别</h4>
+
+虚拟机（Virtual Machine）是在操作系统中模拟硬件设备，然后运行另一个操作系统，
+
+比如在 Windows 系统里面运行 Ubuntu 系统，这样就可以运行任意的 Ubuntu 应用了。
+
+![Docker与虚拟机](./images/Docker与虚拟机.png)
+
+Docker和虚拟机的差异：
+
+- Docker是一个系统进程；虚拟机是在操作系统中的另一个操作系统
+- Docker体积小、启动速度快、性能好；虚拟机体积大、启动速度慢、性能一般
+
+
 
 
 
