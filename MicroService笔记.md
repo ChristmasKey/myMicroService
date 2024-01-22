@@ -3236,13 +3236,40 @@ Docker和虚拟机的差异：
 
 
 
-
-
 <h4>Docker架构</h4>
+
+**镜像（Image）**：Docker将应用程序及其所需的依赖、函数库、环境、配置等文件打包在一起，称为<span style="color:red;">镜像</span>。
+
+==镜像都是只读的！==
+
+![举例-MySQL镜像](./images/举例-MySQL镜像.png)
+
+**容器（Container）**：镜像中的应用程序运行后形成的进程就是<span style="color:red;">容器</span>，只是Docker会给容器做隔离，对外不可见。
+
+==容器只能将镜像中的文件拷贝下来，进行写操作。==
+
+![举例-MySQL容器.png](./images/举例-MySQL容器.png)
+
+**DockerHub**：一个Docker镜像的托管平台。这样的平台称为Docker Registry。
+
+国内也有类似于 DockerHub 的公开服务，比如 网易云镜像 、阿里云镜像 等。
+
+![DockerHub](./images/DockerHub.png)
+
+**Docker架构**
+
+Docker是一个CS架构的程序，由两部分组成：
+
+- 服务端（Server）：Docker守护进程，负责处理Docker指令，管理镜像、容器等
+- 客户端（Client）：通过命令或RestAPI向Docker服务端发送指令。可以在本地或远程向服务端发送指令。
+
+![Docker架构图](./images/Docker架构图.png)
 
 
 
 ### 安装Docker
+
+Docker 分为 CE（社区版） 和 EE（企业版） 两大版本。Docker CE 支持 64 位版本 CentOS 7，<span style="color:red;">并且要求内核版本不低于 3.10，CentOS满足最低内核的要求</span>。
 
 
 
