@@ -3271,6 +3271,58 @@ Docker是一个CS架构的程序，由两部分组成：
 
 Docker 分为 CE（社区版） 和 EE（企业版） 两大版本。Docker CE 支持 64 位版本 CentOS 7，<span style="color:red;">并且要求内核版本不低于 3.10，CentOS满足最低内核的要求</span>。
 
+#### 卸载Docker
+
+如果之前安装过旧版本的Docker，可以使用下面的命令卸载
+
+```sh
+yum remove docker \
+				  docker-client \
+				  docker-client-latest \
+				  docker-common \
+				  docker-latest \
+				  docker-latest-logrotate \
+				  docker-logrotate \
+				  docker-selinux \
+				  docker-engine-selinux \
+				  docker-engine \
+				  docker-ce
+```
+
+<span style="color:green;">其中 `\` 表示命令的拼接，当我们需要将一条命令换行时可以使用它。</span>
+
+#### 安装Docker
+
+首先需要将虚拟机联网，安装 yum 工具
+
+```sh
+yum install -y yum-utils \
+		   device-mapper-persistent-data \
+		   lvm2 --skip-broken
+```
+
+然后更新本地镜像源
+
+```sh
+yum-config-manager \
+	--add-repo \
+	https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+
+sed -i 's/download.docker.com/mirrors.aliyun.com\/docker-ce/g' /etc/yum.repos.d/docker-ce.repo
+
+yum makecache fast
+```
+
+然后输入命令
+
+```sh
+yum install -y docker-ce
+```
+
+docker-ce为社区免费版本，稍等片刻，Docker即可安装成功。
+
+#### 启动Docker
+
 
 
 ### Docker的基本操作
