@@ -3291,6 +3291,8 @@ yum remove docker \
 
 <span style="color:green;">其中 `\` 表示命令的拼接，当我们需要将一条命令换行时可以使用它。</span>
 
+
+
 #### 安装Docker
 
 首先需要将虚拟机联网，安装 yum 工具
@@ -3319,15 +3321,133 @@ yum makecache fast
 yum install -y docker-ce
 ```
 
-docker-ce为社区免费版本，稍等片刻，Docker即可安装成功。
+docker-ce为社区免费版本。稍等片刻，Docker即可安装成功。
+
+通过命令查看Docker版本来验证Docker是否安装成功
+
+```shell
+docker -v
+```
+
+![Linux命令查看安装的Docker版本](./images/Linux命令查看安装的Docker版本.png)
+
+
 
 #### 启动Docker
+
+Docker应用需要用到各种端口，逐一去修改防火墙设置非常麻烦。因此，建议直接关闭防火墙！（<span style="color:red;">当然，在企业实际应用中禁止这样做！！！</span>）
+
+<span style="color:green;">**关闭Linux的防火墙**</span>
+
+```shell
+# 关闭
+systemctl stop firewalld
+# 禁止开启启动防火墙
+systemctl disable firewalld
+```
+
+通过以下命令启动Docker
+
+```shell
+# 启动Docker服务
+systemctl start docker
+
+# 查看Docker服务是否启动成功
+systemctl status docker
+
+# 停止Docker服务
+systemctl stop docker
+
+# 重启Docker服务
+systemctl restart docker
+```
+
+
+
+#### 配置镜像
+
+Docker官方镜像仓库网速较差，我们需要设置国内镜像：
+
+参考阿里云的镜像加速文档：http://cr.console.aliyun.com/cn-hangzhou/instances/mirrros
+
+![阿里云镜像加速文档](./images/阿里云镜像加速文档.png)
 
 
 
 ### Docker的基本操作
 
+#### 镜像操作
 
+镜像名称一般分两部分组成：`[repository]:[tag]`，例如：
+
+![镜像名称](./images/镜像名称.png)
+
+<span style="color:red;">所以 mysql:5.7 和 mysql:5.6 是两个不同的镜像。</span>
+
+<span style="color:blue;">在没有指定 tag 时，默认是 latest ，代表最新版本的镜像。</span>
+
+1.获取镜像
+
+- 从本地获取：通过 `docker build` 命令利用本地 Dockerfile 文件构建镜像
+
+- 从Docker Registry拉取：通过 `docker pull` 命令从镜像服务器中拉取镜像
+
+2.查看镜像：`docker images`
+
+3.删除镜像：`docker rmi`
+
+4.分享镜像：
+
+- 推送镜像到镜像服务器，供别人下载：`docker push`
+- 通过移动存储设备（如U盘）拷贝给别人：`docker save` ==> 镜像压缩包tar文件 ==> `docker load`
+
+![镜像操作命令](./images/镜像操作命令.png)
+
+<span style="color:#f20c00;">**以上命令不需要死记硬背，可以通过 help 命令查询**</span>：`docker [命令名] --help`
+
+
+
+##### 操作案例
+
+==**案例**：从DockerHub中拉取一个Nginx镜像并查看==
+
+①首先去镜像仓库搜索Nginx镜像：[DockerHub](https://hub-stage.docker.com/)
+
+![在DockerHub中查找Nginx官方镜像](./images/在DockerHub中查找Nginx官方镜像.png)
+
+在图示位置可以查看Linux命令
+
+![查看Docker镜像的拉取命令](./images/查看Docker镜像的拉取命令.png)
+
+②执行镜像拉取命令
+
+![通过Docker命令拉取Nginx镜像](./images/通过Docker命令拉取Nginx镜像.png)
+
+③通过 **images** 查看拉取到的镜像
+
+![查看拉取到的Nginx镜像](./images/查看拉取到的Nginx镜像.png)
+
+
+
+==**案例**：利用docker save将Nginx镜像导出磁盘，然后通过docker load加载回来==
+
+①利用 `docker xx --help` 命令查看 `docker save` 和 `docker load` 的语法
+
+②利用 `docker tag` 创建新镜像 *mynginx1.0*
+
+③使用 `docker save` 导出镜像到磁盘
+
+④
+
+⑤
+
+
+
+#### 容器操作
+
+
+
+#### 数据卷(容器数据管理)
 
 
 
