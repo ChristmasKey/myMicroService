@@ -3394,7 +3394,7 @@ Docker官方镜像仓库网速较差，我们需要设置国内镜像：
 
 2.查看镜像：`docker images`
 
-3.删除镜像：`docker rmi`
+3.删除镜像：`docker rmi [镜像名称]`
 
 4.分享镜像：
 
@@ -3433,17 +3433,189 @@ Docker官方镜像仓库网速较差，我们需要设置国内镜像：
 
 ①利用 `docker xx --help` 命令查看 `docker save` 和 `docker load` 的语法
 
+![docker中的save命令和load命令](./images/docker中的save命令和load命令.png)
+
 ②利用 `docker tag` 创建新镜像 *mynginx1.0*
 
-③使用 `docker save` 导出镜像到磁盘
+![Docker中利用tag命令创建新镜像](./images/Docker中利用tag命令创建新镜像.png)
 
-④
+③利用 `docker save` 导出镜像到磁盘
 
-⑤
+![Docker中利用save命令导出镜像](./images/Docker中利用save命令导出镜像.png)
+
+④利用`docker rmi`删除Docker中的镜像（<span style="color:red;">这里我们把 nginx 镜像也删除掉了</span>）
+
+![Docker中利用rmi命令删除镜像](./images/Docker中利用rmi命令删除镜像.png)
+
+⑤利用`docker load`从磁盘中导入镜像
+
+![Docker中利用load命令加载镜像](./images/Docker中利用load命令加载镜像.png)
+
+
+
+##### 总结
+
+镜像操作有如下命令：
+
+- docker images
+- docker rmi
+- docker pull
+- docker push
+- docker save
+- docker load
+- docker tag
+- docker build
+
+![docker镜像操作练习-拉取Redis镜像](./images/docker镜像操作练习-拉取Redis镜像.png)
+
+---
+
+![Redis官方镜像](./images/Redis官方镜像.png)
+
+---
+
+![Docker镜像练习-Redis镜像](./images/Docker镜像练习-Redis镜像.png)
 
 
 
 #### 容器操作
+
+![容器操作相关命令](./images/容器操作相关命令.png)
+
+##### 操作案例
+
+==**案例**：创建运行一个Nginx容器==
+
+①去docker hub查看Nginx的容器运行命令
+
+![dockerhub中查看nginx容器运行命令](./images/dockerhub中查看nginx容器运行命令.png)
+
+```sh
+$ docker run --name mn -p 8080:80 -d nginx
+```
+
+命令解读
+
+- `docker run`：创建并运行一个容器
+- `--name`：给容器起一个名字，比如叫做 mn（my nginx）
+- `-p`：将宿主机端口与容器端口映射（宿主机端口 : 容器端口）；<span style="color:red;">容器是完全隔离的，无法直接访问到，只能通过映射端口去访问</span>
+- `-d`：后台运行容器
+- `nginx`：镜像名称，例如 nginx，tag标签可缺省，默认**latest**
+
+②执行上面的命令
+
+③查看运行的容器及状态
+
+④访问宿主机映射端口并查看容器的运行日志
+
+![docker创建并运行一个容器](./images/docker创建并运行一个容器.png)
+
+⑤==如何持续的监控日志==     <span style="color:red;">通过 `-f` 选项可以持续监控日志</span>
+
+![docker的logs命令](./images/docker的logs命令.png)
+
+
+
+==**案例**：进入Nginx容器，修改HTML文件内容，添加“欢迎，Spring Stone！”==
+
+①执行以下命令，进入容器
+
+```sh
+$ docker exec -it mn bash
+```
+
+命令解读：
+
+- `docker exec`：进入容器内部，执行一个命令
+- `-it`：给当前进入的容器创建一个标准输入输出终端，允许我们与容器交互
+- `mn`：要进入的容器的名称
+- `bash`：进入容器后执行的命令，bash是一个Linux终端交互命令
+
+![docker中利用exec命令进入容器内部](./images/docker中利用exec命令进入容器内部.png)
+
+<span style="color:red;">可以看出，容器内部有着一套自己的文件系统！但是最简易版本的</span>
+
+②到Docker Hub中查找Nginx在镜像中的目录位置
+
+![到DockerHub中确认Nginx镜像中Nginx的目录位置](./images/到DockerHub中确认Nginx镜像中Nginx的目录位置.png)
+
+③进入镜像中的Nginx目录，查看并修改静态文件内容
+
+```sh
+# 修改页面内容
+$ sed -i 's#Welcome to nginx#欢迎，Spring Stone#g' index.html
+# 修改页面编码字符集，以支持中文显示
+$ sed -i 's#<head>#<head><meta charset="utf-8">#g' index.html
+```
+
+![修改Nginx镜像中的Nginx静态文件](./images/修改Nginx镜像中的Nginx静态文件.png)
+
+④重新访问Nginx
+
+![修改静态文件后访问Nginx镜像容器](./images/修改静态文件后访问Nginx镜像容器.png)
+
+
+
+==**容器操作的其他相关命令**==
+
+停止运行 mn 容器
+
+```sh
+$ exit # 退出容器
+$ docker stop mn
+```
+
+查看所有容器，包括停止运行的
+
+```sh
+$ docker ps -a
+```
+
+![停止运行Docker容器](./images/停止运行Docker容器.png)
+
+启动 mn 容器
+
+```sh
+$ docker start mn
+```
+
+停止 mn 容器，并将其删除
+
+```sh
+$ docker stop mn
+$ docker rm mn
+# 或者
+$ docker rm -f mn
+```
+
+![Docker启动容器及强制删除容器](./images/Docker启动容器及强制删除容器.png)
+
+
+
+##### 总结
+
+查看容器状态
+
+- `docker ps`
+- 添加 `-a` 参数查看所有状态的容器
+
+删除容器
+
+- `docker rm`
+- 不能删除运行中的容器，除非添加`-f`参数
+
+进入容器
+
+- 命令是`docker exec -it [容器名] [要执行的命令]`
+- exec命令可以进入容器修改文件，但是在容器内修改文件是不推荐的
+    - 修改操作没有记录
+    - 修改比较麻烦
+
+![练习-Redis容器](./images/练习-Redis容器.png)
+
+---
+
+
 
 
 
