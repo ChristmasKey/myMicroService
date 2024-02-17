@@ -3615,11 +3615,76 @@ $ docker rm -f mn
 
 ---
 
+![Redis镜像文档](./images/Redis镜像文档.png)
 
+```sh
+# 修改命令，添加端口映射
+$ docker run --name mr -p 6379:6379 -d redis redis-server --appendonly yes
+```
+
+---
+
+![查看运行中的Redis容器并连接Redis](./images/查看运行中的Redis容器并连接Redis.png)
+
+---
+
+![练习-Redis容器中的Redis存值练习](./images/Redis容器中的Redis存值练习.png)
+
+---
+
+执行如下命令：
+
+```sh
+$ docker exec -it mr bash
+# 或者用如下快捷命令
+$ docker exec -it mr redis-cli
+```
+
+![Redis容器中的Redis存值练习结果](./images/Redis容器中的Redis存值练习结果.png)
 
 
 
 #### 数据卷(容器数据管理)
+
+在Docker容器中，**文件和数据** 都是与 **容器** 耦合在一起的，这会产生许多问题
+
+![容器与数据耦合的问题](./images/容器与数据耦合的问题.png)
+
+**数据卷（volume）**是一个虚拟目录，指向宿主机文件系统中的某个目录。
+
+容器在创建后可以使用数据卷，将容器中的文件目录与数据卷进行关联（本质是在跟宿主机文件系统上的目录进行关联），从而实现数据与容器的解耦。
+
+![数据卷与容器目录进行关联](./images/数据卷与容器目录进行关联.png)
+
+数据卷操作命令的基本语法如下：
+
+```sh
+$ docker volume [COMMAND]
+```
+
+`docker volume`命令是数据卷操作，根据命令后跟随的command来确定具体的下一步的操作：
+
+- **create**：创建一个volume
+- **inspect**：显示一个或多个volume的信息
+- **ls**：列出所有的volume
+- **prune**：删除未使用的volume
+- **rm**：删除一个或多个指定的volume
+
+
+
+##### 操作案例
+
+==**案例**：创建一个数据卷，并查看数据卷在宿主机的目录位置==
+
+①创建数据卷
+
+
+
+②查看所有数据
+
+
+
+③查看数据卷详细信息
 
 
 
