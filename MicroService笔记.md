@@ -3678,13 +3678,83 @@ $ docker volume [COMMAND]
 
 ①创建数据卷
 
-
+```sh
+$ docker volume create html
+```
 
 ②查看所有数据
 
-
+```sh
+$ docker volume ls
+```
 
 ③查看数据卷详细信息
+
+```sh
+$ docker volume inspect
+```
+
+![数据卷操作练习](./images/数据卷操作练习.png)
+
+
+
+#### 挂载数据卷
+
+我们在创建容器时，可以通过 `-v` 参数来挂载一个数据卷到某个容器目录（**-v volumeName: /targetContainerPath**）
+
+<span style="color:red;">**即使挂载一个不存在的数据卷也是可以的，它会在被挂载前被创建**</span>
+
+![挂载数据卷说明案例](./images/挂载数据卷说明案例.png)
+
+
+
+##### 操作案例
+
+==**案例**：创建一个Nginx容器，修改容器内的html目录下的index.html内容==
+
+![挂载数据卷案例需求](./images/挂载数据卷案例需求.png)
+
+①创建容器并挂载数据卷到容器内的HTML目录
+
+```sh
+$ docker run --name mn -v html:/usr/share/nginx/html -p 8080:80 -d nginx
+```
+
+②进入html数据卷所在位置，修改HTML内容
+
+```sh
+$ docker volume inspect html
+$ vim /var/lib/docker/volumes/html/_data/index.html
+```
+
+③通过映射端口访问Nginx容器，查看是否成功修改内容
+
+![数据卷挂载案例结果验证](./images/数据卷挂载案例结果验证.png)
+
+
+
+##### 拓展
+
+==**案例**：创建并运行一个MySQL容器，将宿主机目录直接挂载到容器==
+
+<span style="color:red;">提示：目录挂载与数据卷挂载的语法类似</span>
+
+- -v [宿主机目录]:[容器内目录]
+- -v [宿主机文件]:[容器内文件]
+
+<span style="color:lightgreen;">实现思路如下</span>
+
+1.将 mysql.tar 文件上传到虚拟机，通过 load 命令加载为镜像
+
+2.创建目录 `/tmp/mysql/data`
+
+3.创建目录 `/tmp/mysql/conf`，将 **hmy.cnf** 文件上传到 `/tmp/mysql/conf`
+
+4.在Docker Hub上查阅资料，创建并运行MySQL容器，要求：
+
+- 挂载 `/tmp/mysql/data/` 到 mysql容器 内数据存储目录
+- 挂载 `/tmp/mysql/conf/hmy.cnf` 到 mysql容器 的配置文件
+- 设置 MySQL 密码
 
 
 
