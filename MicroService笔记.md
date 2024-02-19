@@ -3746,15 +3746,81 @@ $ vim /var/lib/docker/volumes/html/_data/index.html
 
 1.将 mysql.tar 文件上传到虚拟机，通过 load 命令加载为镜像
 
+```sh
+$ docker load -i mysql.tar
+# 或者拉取镜像
+$ docker pull mysql:8.0.36
+```
+
 2.创建目录 `/tmp/mysql/data`
 
 3.创建目录 `/tmp/mysql/conf`，将 **hmy.cnf** 文件上传到 `/tmp/mysql/conf`
+
+```sh
+$ mkdir -p /tmp/mysql/data /tmp/mysql/
+```
+
+hmy.cnf 内容如下：
+
+```ini
+[mysqld]
+skip-name-resolve
+character_set_server=utf8
+datadir=/var/lib/mysql
+server-id=1000
+```
 
 4.在Docker Hub上查阅资料，创建并运行MySQL容器，要求：
 
 - 挂载 `/tmp/mysql/data/` 到 mysql容器 内数据存储目录
 - 挂载 `/tmp/mysql/conf/hmy.cnf` 到 mysql容器 的配置文件
 - 设置 MySQL 密码
+
+![MySQL官方镜像使用文档](./images/MySQL官方镜像使用文档.png)
+
+---
+
+![MySQL镜像-自定义配置文件](./images/MySQL镜像-自定义配置文件.png)
+
+---
+
+![MySQL镜像-数据存储位置](./images/MySQL镜像-数据存储位置.png)
+
+将文档中的命令稍加修改得到如下命令
+
+```sh
+$ docker run \
+# 容器命名：mysql
+$  --name mysql \
+# 设置root账号密码
+$  -e MYSQL_ROOT_PASSWORD=1234 \
+# 端口映射
+$  -p 3316:3306\
+# 挂载自定义配置文件（容器的配置文件位置参考图2）
+$  -v /tmp/mysql/conf/hmy.cnf:/etc/mysql/conf.d/hmy.cnf \
+# 挂载数据存储目录（容器的数据存储目录参考图3）
+$  -v /tmp/mysql/data:/var/lib/mysql \
+# 以守护进程在后台运行
+$  -d \
+# 指定容器镜像
+$  mysql:8.0.36
+```
+
+5.验证结果
+
+![mysql容器创建结果](./images/mysql容器创建结果.png)
+
+
+
+##### 两种挂载方式对比
+
+![数据卷挂载方式对比](./images/数据卷挂载方式对比.png)
+
+挂载容器目录的方式有两种
+
+①数据卷挂载耦合度低，由docker来管理目录，但是目录较深，不好找
+
+②目录挂载耦合度高，需要我们自己管理目录，不过目录容器查找
 
 
 
