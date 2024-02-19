@@ -3830,13 +3830,44 @@ $  mysql:8.0.36
 
 <span style="color:red;">**镜像**是将应用程序及其需要的系统函数库、环境、配置、依赖打包而成的。</span>
 
+![镜像的结构](./images/镜像的结构.png)
 
+镜像是分层结构，每一层称为一个Layer
+
+- BaseImage层：包含基本的系统函数库、环境变量、文件系统
+- EntryPoint：入口，是镜像中应用启动的命令
+- 其它：在BaseImage基础上添加依赖、安装程序、完成整个应用的安装和配置
 
 
 
 #### DockerFile语法
 
+DockerFile 就是一个文本文件，其中包含一个个的**指令（Instruction）**，用指令来说明要执行什么操作来构建镜像。每一个指令都形成一层Layer。
 
+|    指令    |                     说明                     |             示例             |
+| :--------: | :------------------------------------------: | :--------------------------: |
+|    FROM    |                 指定基础镜像                 |        FROM centos:6         |
+|    ENV     |        设置环境变量，可在后面指令使用        |        ENV key value         |
+|    COPY    |         拷贝本地文件到镜像的指定目录         |  COPY ./mysql-5.7.rpm /tmp   |
+|    RUN     |  执行Linux的shell命令，一般是安装过程的命令  |     RUN yum install gcc      |
+|   EXPOSE   | 指定容器运行时监听的端口，是给镜像使用者看的 |         EXPOSE 8080          |
+| ENTRYPOINT |     镜像中应用的启动命令，容器运行时调用     | ENTRYPOINT java -jar xxx.jar |
+
+更新详细语法说明，参考官网文档：https://docs.docker.com/engine/reference/builder/
+
+==**案例**：基于Ubuntu镜像构建一个新镜像，运行一个Java项目==
+
+①
+
+②
+
+③
+
+④
+
+⑤
+
+⑥
 
 
 
