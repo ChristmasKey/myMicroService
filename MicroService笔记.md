@@ -3824,7 +3824,7 @@ $  mysql:8.0.36
 
 
 
-### DockerFile自定义镜像
+### Dockerfile自定义镜像
 
 #### 镜像结构
 
@@ -3840,9 +3840,9 @@ $  mysql:8.0.36
 
 
 
-#### DockerFile语法
+#### Dockerfile语法
 
-DockerFile 就是一个文本文件，其中包含一个个的**指令（Instruction）**，用指令来说明要执行什么操作来构建镜像。每一个指令都形成一层Layer。
+Dockerfile 就是一个文本文件，其中包含一个个的**指令（Instruction）**，用指令来说明要执行什么操作来构建镜像。每一个指令都形成一层Layer。
 
 |    指令    |                     说明                     |             示例             |
 | :--------: | :------------------------------------------: | :--------------------------: |
@@ -3853,27 +3853,196 @@ DockerFile 就是一个文本文件，其中包含一个个的**指令（Instruc
 |   EXPOSE   | 指定容器运行时监听的端口，是给镜像使用者看的 |         EXPOSE 8080          |
 | ENTRYPOINT |     镜像中应用的启动命令，容器运行时调用     | ENTRYPOINT java -jar xxx.jar |
 
-更新详细语法说明，参考官网文档：https://docs.docker.com/engine/reference/builder/
-
-==**案例**：基于Ubuntu镜像构建一个新镜像，运行一个Java项目==
-
-①
-
-②
-
-③
-
-④
-
-⑤
-
-⑥
+更详细的语法说明，参考官网文档：https://docs.docker.com/engine/reference/builder/
 
 
 
 #### 构建Java项目
 
+==**案例**：基于Ubuntu镜像构建一个新镜像，运行一个Java项目==
 
+##### ①新建目录
+
+新建一个空文件夹 docker-demo
+
+```sh
+$ mkdir /tmp/docker-demo
+```
+
+##### ②拷贝jar包
+
+将 docker-demo.jar 文件拷贝到 docker-demo 这个目录
+
+首先，新建一个Maven项目
+
+![docker-demo项目创建步骤1](./images/docker-demo项目创建步骤1.png)
+
+---
+
+![docker-demo项目创建步骤2](./images/docker-demo项目创建步骤2.png)
+
+然后，在pom.xml中添加如下内容
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.stone</groupId>
+    <artifactId>docker-demo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <!--指定SpringBoot为父工程-->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.5.6</version>
+    </parent>
+
+    <dependencies>
+        <!--引入SpringBoot的Web依赖-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>2.5.6</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <!-- 指定Maven编译器的jdk版本，
+                 如果不指定，Maven3默认使用jdk1.5，Maven2默认使用jdk1.3
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <!--SpringBoot框架提供了一套自己的打包机制，
+                是通过 spring-boot-maven-plugin 插件来实现的
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+
+[maven-compiler-plugin 插件详解](https://blog.csdn.net/Java_1710/article/details/120992614)
+
+> maven-compiler-plugin 插件是一个 Maven 插件，用来编译项目代码
+
+==spring-boot-maven-plugin插件的作用==
+
+> 在SpringBoot项目中，框架提供了一套自己的打包机制，是通过spring-boot-maven-plugin插件来实现的。
+>
+> 可以在Maven的生命周期package后重新打包，生成新的JAR包。
+>
+> spring-boot-maven-plugin插件将SpringBoot的项目打包成FAT-JAR，也就是说将项目启动运行所需要的JAR都包含进来了。
+>
+> 普通的JAR和SpringBoot打包成的FAT-JAR内部结构是不一样的。
+>
+> ——参考文章：https://blog.csdn.net/goodjava2007/article/details/122205769
+
+<span style="color:red;">详细实现代码参考项目 docker-demo</span>
+
+<span style="color:blue;">将项目打成jar包，并拷贝</span>
+
+
+
+##### ③拷贝jdk
+
+将 jdk8.tar.gz 文件拷贝到 docker-demo 这个目录
+
+[JDK下载地址](https://www.oracle.com/cn/java/technologies/downloads/)
+
+![Oracle的JDK下载](./images/Oracle的JDK下载.png)
+
+
+
+##### ④拷贝Dockerfile
+
+将 Dockerfile 拷贝到 docker-demo 这个目录
+
+```dockerfile
+# 指定基础镜像
+FROM ubuntu:16.04
+# 配置环境变量，JDK的安装目录
+ENV JAVA_DIR=/usr/local
+
+# 拷贝jdk和项目jar包
+COPY ./jdk-8u401-linux-x64.tar.gz $JAVA_DIR/
+COPY ./docker-demo.jar /tmp/app.jar
+
+# 安装jdk
+RUN cd $JAVA_DIR \
+ && tar -xf ./jdk-8u401-linux-x64.tar.gz \
+ && mv ./jdk1.8.0_401 ./java8
+
+# 配置环境变量
+ENV JAVA_HOME=$JAVA_DIR/java8
+ENV PATH=$PATH:$JAVA_HOME/bin
+
+# 暴露端口
+EXPOSE 6789
+# 入口，Java项目的启动命令
+ENTRYPOINT java -jar /tmp/app.jar
+```
+
+<span style="color:red;">**注意：**Dockerfile里的文件目录指的都是容器的文件系统中的文件目录！！！</span>
+
+
+
+##### ⑤进入docker-demo
+
+```sh
+$ cd /tmp/docker-demo
+```
+
+
+
+##### ⑥构建镜像
+
+运行如下命令
+
+```sh
+$ docker build -t javaweb:1.0 .
+```
+
+<span style="color:red;">命令末尾的 “ . “ 表示在当前目录执行镜像构建，构建过程中所用到的文件都会在当前目录下查找</span>
+
+查看生成的镜像，并运行一个对应的容器，查看容器
+
+```sh
+$ docker images
+$ docker run --name web -p 6789:6789 -d javaweb:1.0
+$ docker ps
+```
+
+
+
+##### ⑦访问验证
+
+访问镜像：http://ip:6789/hello/count，结果如下
+
+![自定义java项目镜像访问结果](./images/自定义java项目镜像访问结果.png)
 
 
 
