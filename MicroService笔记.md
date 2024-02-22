@@ -4170,17 +4170,43 @@ $ curl -L https://github.com/docker/compose/releases/download/v2.24.6/docker-com
 
 其中 `uname -s` 和 `uname -m` 分别是获取操作系统名称和计算机处理器类型的命令。最终得到的链接如下
 
->1111
-
-或者我们也可以直接在github上下载二进制文件，上传到Linux，具体操作如下：
+>https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-linux-x86_64
 
 
 
-##### 2.121
+或者我们也可以直接在github上下载二进制文件，上传到Linux，操作如下：
+
+==上述的下载链接就是此处的下载链接地址==
+
+![DockerCompose二进制文件下载](./images/DockerCompose二进制文件下载.png)
+
+将文件上传到 `/usr/local/bin` 目录即可。
 
 
 
+##### 2.修改文件权限
 
+为刚刚上传的文件添加执行权限
+
+```sh
+$ chmod +x /usr/local/bin/docker-compose-linux-x86_64
+```
+
+
+
+##### 3.配置自动补全命令
+
+配置了自动补全命令后，在编写Compose文件时会有自动提示，方便编写。
+
+```sh
+$ curl -L https://raw.githubusercontent.com/docker/compose/master/contrib/completion/bash/docker-compose > /etc/bash_completion.d/docker-compose
+```
+
+如果这里始终下载不下来，需要修改自己的Linux中的hosts文件
+
+```sh
+$ echo "199.232.68.133 raw.githubusercontent.com" >> /etc/hosts
+```
 
 
 
