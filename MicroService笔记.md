@@ -4168,7 +4168,11 @@ $ docker run --name web -p 8090:8090 -d web:1.0
 $ curl -L https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
 ```
 
-其中 `uname -s` 和 `uname -m` 分别是获取操作系统
+其中 `uname -s` 和 `uname -m` 分别是获取操作系统名称和计算机处理器类型的命令。最终得到的链接如下
+
+>1111
+
+或者我们也可以直接在github上下载二进制文件，上传到Linux，具体操作如下：
 
 
 
