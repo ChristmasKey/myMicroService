@@ -19,17 +19,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a0f9214-a0a7-4502-8c41-01d377cd0fdb" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stone/DockerDemoApplication.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stone/controller/HelloController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/application.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../MicroService笔记.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../MicroService笔记.md" afterDir="false" />
-    </list>
+    <list default="true" id="8a0f9214-a0a7-4502-8c41-01d377cd0fdb" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -105,6 +95,7 @@
       <workItem from="1708499132388" duration="3606000" />
       <workItem from="1708503259722" duration="26000" />
       <workItem from="1708503455758" duration="1895000" />
+      <workItem from="1708515486144" duration="64000" />
     </task>
     <servers />
   </component>

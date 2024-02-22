@@ -4044,9 +4044,137 @@ $ docker ps
 
 ![自定义java项目镜像访问结果](./images/自定义java项目镜像访问结果.png)
 
+##### ⑧后续优化
+
+从 Dockerfile 中可以看出，从 0 开始构建一个java项目的Docker镜像还是比较麻烦的。
+
+通过分析我们可以得出，Dockerfile 中的==动作层==可以分为两部分：安装jdk 、构建java项目
+
+```dockerfile
+# 指定基础镜像
+FROM ubuntu:16.04
+# 配置环境变量，JDK的安装目录
+ENV JAVA_DIR=/usr/local
+
+# 拷贝jdk
+COPY ./jdk-8u401-linux-x64.tar.gz $JAVA_DIR/
+
+# 安装jdk
+RUN cd $JAVA_DIR \
+ && tar -xf ./jdk-8u401-linux-x64.tar.gz \
+ && mv ./jdk1.8.0_401 ./java8
+
+# 配置环境变量
+ENV JAVA_HOME=$JAVA_DIR/java8
+ENV PATH=$PATH:$JAVA_HOME/bin
+
+# ===========================分割线=============================
+
+# 拷贝项目jar包
+COPY ./docker-demo.jar /tmp/app.jar
+# 暴露端口
+EXPOSE 6789
+# 入口，Java项目的启动命令
+ENTRYPOINT java -jar /tmp/app.jar
+```
+
+而**安装jdk**是每一个java项目镜像构建时所必须的==动作层==，因此我们可以将这部分动作层构建成一个<span style="color:red;">基础镜像</span>，以供每次构建java项目镜像的时候调用。
+
+这样就方便了许多，可以省去大量重复的工作，<span style="color:green;">这就是分层的好处</span>。
+
+<span style="color:blue;">java:8-alpine镜像</span> 已经帮我们封装好了，它是一个体积非常小的 jdk镜像，基于它去构建我们自己的java项目镜像，操作就变得非常简单了。
+
+```dockerfile
+# 指定基础镜像
+FROM java:8-alpine
+
+# 拷贝项目jar包
+COPY ./docker-demo.jar /tmp/app.jar
+# 暴露端口
+EXPOSE 6789
+# 入口，Java项目的启动命令
+ENTRYPOINT java -jar /tmp/app.jar
+```
 
 
-### Docker-Compose
+
+#### 总结
+
+1.Dockerfile 的本质是一个文件，通过指令描述镜像的构建过程
+
+2.Dockerfile 的第一行必须是 `FROM`，从一个基础镜像来构建
+
+3.基础镜像可以是基本操作系统，如Ubuntu；也可以是其他人制作好的镜像，例如java:8-apline
+
+
+
+### DockerCompose
+
+![DockerCompose](./images/DockerCompose.png)
+
+<span style="color:blue;">Docker Compose</span> 可以基于 **Compose文件** 帮我们快速的部署分布式应用，而无需手动一个个创建和运行容器！
+
+Compose文件是一个文本文件，通过指令定义集群中的每个容器如何运行。【Compose文件可以看做**N**个`docker run` 命令的集合】
+
+[DockerCompose的详细语法参考官网](https://docs.docker.com/compose/compose-file/)
+
+Compose文件样例（是yaml格式的）
+
+```yaml
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:5.7.25
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+    volumes:
+      - /tmp/mysql/data:/var/lib/mysql
+      - /tmp/myysql/conf/hmy.cnfL/etc/mysql/conf.d/hmy.cnf
+  web:
+    build: .
+    ports:
+      - 8090: 8090
+```
+
+对比`docker run`命令
+
+```sh
+# mysql容器
+$ docker run \
+$   --name mysql \
+$   -e MYSQL_ROOT_PASSWORD=1234 \
+$   -p 3306:3306
+$   -v /tmp/mysql/conf/hmy.cnf:/etc/mysql/conf.d/hmy.cnf
+$   -v /tmp/mysql/data:/var/lib/mysql \
+$   -d \
+$   mysql:5.7.25
+
+# 构建镜像
+$ docker build -t web:1.0 .
+# 运行容器
+$ docker run --name web -p 8090:8090 -d web:1.0
+```
+
+![Compose指令与Docker的Run命令对比](./images/Compose指令与Docker的Run命令对比.png)
+
+
+
+#### 安装DockerCompose
+
+##### 1.下载
+
+```sh
+$ curl -L https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+```
+
+其中 `uname -s` 和 `uname -m` 分别是获取操作系统
+
+
+
+##### 2.121
+
+
 
 
 
