@@ -4212,6 +4212,8 @@ $ echo "199.232.68.133 raw.githubusercontent.com" >> /etc/hosts
 
 ### Docker镜像服务
 
+==**案例**：将之前的 cloud-demo 微服务集群利用 DockerCompose 部署==
+
 
 
 123
