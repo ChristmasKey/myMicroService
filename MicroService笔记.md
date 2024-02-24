@@ -4214,6 +4214,34 @@ $ echo "199.232.68.133 raw.githubusercontent.com" >> /etc/hosts
 
 ==**案例**：将之前的 cloud-demo 微服务集群利用 DockerCompose 部署==
 
+1、准备一个 cloud-demo 文件夹，在其中编写好各个服务和网关的 Dockerfile 文件，以便后面Docker构建镜像并运行容器，文件夹结构如下：
 
+> cloud-demo根文件夹
+>
+> - gateway子文件夹
+>   - Dockerfile文件
+> - userservice子文件夹
+>   - Dockerfile文件
+> - orderservice子文件夹
+>   - Dockerfile文件
 
-123
+Dockerfile内容统一如下：
+
+```dockerfile
+FROM java:8-alpine
+COPY ./app.jar /tmp/app.jar
+ENTRYPOINT java -jar /tmp/app.jar
+```
+
+2、在 cloud-demo 文件夹下创建 mysql 子文件夹，并将之前的 hmy.cnf 文件拷贝进去，结构如下：
+
+> cloud-demo根文件夹
+>
+> - mysql子文件夹
+>   - conf子文件夹
+>     - hmy.cnf
+>   - data子文件夹
+> - 其他子文件夹
+
+3、编写
+
