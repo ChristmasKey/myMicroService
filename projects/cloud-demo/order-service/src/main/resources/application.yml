@@ -4,13 +4,14 @@ spring:
   application:
     name: orderService # order服务的服务名称
   datasource:
-    url: jdbc:mysql://localhost:3306/cloud_order?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://mysql:3306/cloud_order?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
   cloud:
     nacos:
-      server-addr: localhost:8848 # Nacos服务端地址
+      server-addr: nacos:8848 # DockerCompose中的Nacos服务名称
+#      server-addr: localhost:8848 # Nacos服务端地址
 #      server-addr: localhost:8000 # Nacos集群地址
       username: nacos # Nacos开启权限验证后，需要设置登录用户名
       password: nacos # Nacos开启权限验证后，需要设置登录密码

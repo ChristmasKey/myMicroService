@@ -4214,6 +4214,8 @@ $ echo "199.232.68.133 raw.githubusercontent.com" >> /etc/hosts
 
 ==**案例**：将之前的 cloud-demo 微服务集群利用 DockerCompose 部署==
 
+#### 预备工作
+
 1、准备一个 cloud-demo 文件夹，在其中编写好各个服务和网关的 Dockerfile 文件，以便后面Docker构建镜像并运行容器，文件夹结构如下：
 
 > cloud-demo根文件夹
@@ -4233,7 +4235,11 @@ COPY ./app.jar /tmp/app.jar
 ENTRYPOINT java -jar /tmp/app.jar
 ```
 
-2、在 cloud-demo 文件夹下创建 mysql 子文件夹，并将之前的 hmy.cnf 文件拷贝进去，结构如下：
+2、在 cloud-demo 文件夹下创建 mysql 子文件夹，并将之前的 hmy.cnf 文件拷贝进去；
+
+另外，通过 sql 语句查看 cloud_order 和 cloud_user 两个DB的存储位置，并将它们也拷贝过来；
+
+文件夹结构如下：
 
 > cloud-demo根文件夹
 >
@@ -4241,7 +4247,101 @@ ENTRYPOINT java -jar /tmp/app.jar
 >   - conf子文件夹
 >     - hmy.cnf
 >   - data子文件夹
+>       - cloud_order文件夹
+>       - cloud_user文件夹
 > - 其他子文件夹
 
-3、编写
+```sql
+# 查看数据库的物理存储位置
+show variables like 'datadir';
+```
+
+
+
+3、编写 docker-compose 文件，并上传到 cloud-demo 根文件夹下
+
+```yaml
+version: "3.2"
+
+services:
+  nacos:
+    image: nacos/nacos-server
+    environment:
+      MODE: standalone
+    ports:
+      - "8848:8848"
+  mysql:
+    image: mysql:8.0.36
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+    volumes:
+      # $PWD 表示执行PWD命令，获取当前所在目录位置
+      - "$PWD/mysql/data:/var/lib/mysql"
+      - "$PWD/mysql/conf:/etc/mysql/conf.d/"
+  orderservice:
+    build: ./orderservice
+  userservice:
+    build: ./userservice
+  gateway:
+    build: ./gateway
+    ports:
+    - "10010:10010"
+```
+
+
+
+#### 项目打包
+
+1、用DockerCompose进行项目部署时，所有的服务之间都可以通过服务名互相访问。
+
+所以我们需要修改自己的 cloud-demo 项目，将数据库、Nacos地址都改为 docker-compose 中的服务名
+
+![DockerCompose部署-修改nacos、mysql地址](./images/DockerCompose部署-修改nacos、mysql地址.png)
+
+2、使用Maven打包工具，将项目中的每个微服务都打包为app.jar（因为上面的Dockerfile中，统一指定了包名）
+
+在 pom.xml 文件中添加如下标签，即可配置每个模块的最终打包名称
+
+```xml
+<build>
+    <!--指定最终生成的jar包名称-->
+    <finalName>app</finalName>
+    <plugins>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+        </plugin>
+    </plugins>
+</build>
+```
+
+3、将打包好的app.jar拷贝到 cloud-demo 中的每一个对应的子目录中，最终的文件夹结构如下：
+
+> cloud-demo根文件夹
+>
+> - gateway子文件夹
+>     - Dockerfile文件
+>     - app.jar （来自 gateway 模块）
+> - userservice子文件夹
+>     - Dockerfile文件
+>     - app.jar （来自 userservice 模块）
+> - orderservice子文件夹
+>     - Dockerfile文件
+>     - app.jar （来自 orderservice 模块）
+> - mysql子文件夹
+>     - conf子文件夹
+>         - hmy.cnf
+>     - data子文件夹
+> - docker-compose.yml
+
+
+
+#### 上传文件
+
+将 cloud-demo 上传到虚拟机 **/tmp** 目录下，利用 `docker-compose up -d` 命令来部署
+
+```sh
+$ cd /tm/cloud-demo
+$ docker-compose up -d
+```
 
