@@ -1,6 +1,7 @@
 package com.djn.order.service.impl;
 
 // import com.djn.order.clients.UserClient;
+import cn.hutool.core.date.DateUtil;
 import com.djn.feign.clients.UserClient;
 import com.djn.order.domain.Order;
 // import com.djn.order.domain.User;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
+import java.util.Date;
 
 /**
  * Name: OrderServiceImpl
@@ -38,6 +40,11 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderMapper.findById(orderId);
         //2.用 Feign 发起远程调用
         User user = userClient.findById(order.getUserId());
+
+        String timeFormat = DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss");
+        int rowCount = orderMapper.insertOperInfo(timeFormat, "订单查询");
+        System.out.println("本次操作的系统时间: " + timeFormat + ", 插入 " + rowCount + " 条操作日志");
+
         //3.封装User到Order
         order.setUser(user);
         //4.返回

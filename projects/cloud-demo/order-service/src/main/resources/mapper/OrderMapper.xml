@@ -6,4 +6,8 @@
     <select id="findById" resultType="order">
         select * from tb_order where id = #{orderId}
     </select>
+
+    <insert id="insertOperInfo">
+        insert into tb_oper_log (oper_time, oper_type) value (#{operTime}, #{operType})
+    </insert>
 </mapper>

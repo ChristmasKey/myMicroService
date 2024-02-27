@@ -16,4 +16,6 @@ import org.apache.ibatis.annotations.Param;
 public interface OrderMapper {
 
     Order findById(@Param("orderId") Long orderId);
+
+    int insertOperInfo(@Param("operTime") String operTime, @Param("operType") String operType);
 }

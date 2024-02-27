@@ -1,0 +1,28 @@
+version: "3.2"
+
+services:
+  nacos:
+    image: nacos/nacos-server
+    environment:
+      MODE: standalone
+    ports:
+      - "8848:8848"
+  mysql:
+    image: mysql:8.0.36
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      TZ: Asia/Shanghai
+    volumes:
+      # $PWD 表示执行PWD命令，获取当前所在目录位置
+      - "$PWD/mysql/data:/var/lib/mysql"
+      - "$PWD/mysql/conf:/etc/mysql/conf.d/"
+    ports:
+      - "13306:3306"
+  orderservice:
+    build: ./orderservice
+  userservice:
+    build: ./userservice
+  gateway:
+    build: ./gateway
+    ports:
+      - "10010:10010"

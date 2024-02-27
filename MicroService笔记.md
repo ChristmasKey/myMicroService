@@ -4235,11 +4235,7 @@ COPY ./app.jar /tmp/app.jar
 ENTRYPOINT java -jar /tmp/app.jar
 ```
 
-2、在 cloud-demo 文件夹下创建 mysql 子文件夹，并将之前的 hmy.cnf 文件拷贝进去；
-
-另外，通过 sql 语句查看 cloud_order 和 cloud_user 两个DB的存储位置，并将它们也拷贝过来；
-
-文件夹结构如下：
+2、在 cloud-demo 文件夹下创建 mysql 子文件夹，并将之前的 hmy.cnf 文件拷贝进去，文件夹结构如下：
 
 > cloud-demo根文件夹
 >
@@ -4247,18 +4243,11 @@ ENTRYPOINT java -jar /tmp/app.jar
 >   - conf子文件夹
 >     - hmy.cnf
 >   - data子文件夹
->       - cloud_order文件夹
->       - cloud_user文件夹
 > - 其他子文件夹
 
-```sql
-# 查看数据库的物理存储位置
-show variables like 'datadir';
-```
 
 
-
-3、编写 docker-compose 文件，并上传到 cloud-demo 根文件夹下
+3、编写 docker-compose.yml 文件，并上传到 cloud-demo 根文件夹下
 
 ```yaml
 version: "3.2"
@@ -4274,10 +4263,13 @@ services:
     image: mysql:8.0.36
     environment:
       MYSQL_ROOT_PASSWORD: 1234
+      TZ: Asia/Shanghai # 设置时区
     volumes:
       # $PWD 表示执行PWD命令，获取当前所在目录位置
       - "$PWD/mysql/data:/var/lib/mysql"
       - "$PWD/mysql/conf:/etc/mysql/conf.d/"
+    ports:
+      - "13306:3306"
   orderservice:
     build: ./orderservice
   userservice:
@@ -4285,7 +4277,7 @@ services:
   gateway:
     build: ./gateway
     ports:
-    - "10010:10010"
+      - "10010:10010"
 ```
 
 
@@ -4338,10 +4330,74 @@ services:
 
 #### 上传文件
 
+##### 部署容器
+
 将 cloud-demo 上传到虚拟机 **/tmp** 目录下，利用 `docker-compose up -d` 命令来部署
+
+![docker-compose命令用法详解](./images/docker-compose命令用法详解.png)
 
 ```sh
 $ cd /tm/cloud-demo
 $ docker-compose up -d
 ```
 
+全部部署成功后，会得到如下图的结果：
+
+![DockerCompose镜像部署-1](./images/DockerCompose镜像部署-1.png)
+
+
+
+##### 查看日志
+
+随后我们可以利用 `docker-compose logs` 命令来查看容器的运行日志
+
+![docker-compose的logs命令](./images/docker-compose的logs命令.png)
+
+```sh
+# 查看所有容器的运行日志
+$ docker-compose logs -f
+# 查看userservice服务容器的运行日志
+$ docker-compose logs -f userservice
+```
+
+通过日志，我们可以看到userservice服务运行时候报了错
+
+![DockerCompose镜像部署-2](./images/DockerCompose镜像部署-2.png.)
+
+这是因为 Nacos 与 UserService 服务是同时运行的，在 UserService 服务启动的过程中会尝试去向 Nacos 注册服务，但是此时 Nacos 尚未启动成功，导致注册失败，故而报错，其它服务也是同理。
+
+
+
+##### 同步环境
+
+虽然 UserService 等几个服务容器启动失败了，但是 Nacos 和 MySQL 是成功运行起来了的，
+
+我们可以先将之前的 **Nacos命名空间** 以及 **MySQL数据库** 都同步过来
+
+![同步Nacos和MySQL](./images/同步Nacos和MySQL.png)
+
+随后我们可以通过 `docker-compose restart` 命令重启服务
+
+![docker-compose的restart命令](./images/docker-compose的restart命令.png)
+
+```sh
+$ docker-compose restart gateway userservice orderservice
+```
+
+全部重启成功后，会得到如下图的结果：
+
+![DockerCompose镜像部署-3](./images/DockerCompose镜像部署-3.png)
+
+然后我们再去查看一次 UserService 服务容器的运行日志，会发现没有任何报错了
+
+![DockerCompose镜像部署-4](./images/DockerCompose镜像部署-4.png)
+
+
+
+##### 访问验证
+
+![DockerCompose镜像部署-5](./images/DockerCompose镜像部署-5.png)
+
+
+
+123

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
  * @since 2024-01-08 12:29
  */
 // @FeignClient(value = "userservice", configuration = DefaultFeignConfiguration.class)
-@FeignClient(value = "userservice")
+@FeignClient(value = "userService")
 public interface UserClient {
 
     @GetMapping("/user/{id}")
