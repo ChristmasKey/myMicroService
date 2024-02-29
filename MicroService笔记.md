@@ -4406,4 +4406,77 @@ $ docker-compose restart gateway userservice orderservice
 
 
 
-123
+### Docker镜像仓库
+
+镜像仓库（Docker Registry）有公共的和私有的两种形式：
+
+- 公共仓库：例如Docker官方的 Docker Hub，国内也有一些云服务商提供类似于 Docker Hub 的公开服务，比如 网易云镜像服务、DaoCloud 镜像访问、阿里云镜像服务等
+- 除了使用公开仓库外，用户还可以在本地搭建私有 Docker Registry。企业自己的镜像最好是采用私有 Docker Registry 来实现。
+
+
+
+#### 搭建私有镜像仓库
+
+搭建镜像仓库可以基于 Docker 官方提供的 Docker Registry 来实现。
+
+官网地址：https://hub.docker.com/_/registry
+
+
+
+##### 1、简化版镜像仓库
+
+Docker 官方的 Docker Registry 是一个基础版本的 Docker 镜像仓库，具备仓库管理的完整功能，<span style="color:red;">但是没有图形化界面</span>。
+
+搭建方式比较简单，命令如下：
+
+```sh
+$ docker run -d \
+$     --restart=always \
+$     --name registry \
+$     --p 5000:5000 \
+$     -v registry-data:/var/lib/registry \
+$     registry
+```
+
+命令中挂载了一个数据卷 registry-data 到容器内的 /var/lib/registry 目录，<span style="color:red;">这是私有镜像仓库存放数据的目录</span>。
+
+访问 http://YourIP:5000/v2/_catalog 可以查看当前私有镜像服务中包含的镜像。
+
+
+
+##### 2、图形化界面版本
+
+使用 DockerCompose 部署带有图形化界面的 Docker Registry，命令如下：
+
+```yaml
+version: "3.0"
+services:
+  registry:
+    image: registry
+    volumes:
+      - ./registry-data:/var/lib/registry
+  ui:
+    image: joxit/docker-registry-ui:static
+    ports: 8080:80
+    environment:
+      - REGISTRY_TITLE="SpringStone私有仓库"
+      - REGISTRY_URL=http://registry:5000
+    depends_on:
+      - registry #声明该服务依赖于上面的registry服务
+```
+
+该图形化界面并非 Docker 官方提供的，而是第三方个人在官方的 Docker Registry 镜像的基础上开发出来的，所以它是一个额外的服务。
+
+
+
+##### 3、配置Docker信任地址
+
+
+
+
+
+#### 向镜像仓库推送镜像
+
+
+
+#### 从镜像仓库拉取镜像
