@@ -3847,7 +3847,7 @@ Dockerfile 就是一个文本文件，其中包含一个个的**指令（Instruc
 |    指令    |                     说明                     |             示例             |
 | :--------: | :------------------------------------------: | :--------------------------: |
 |    FROM    |                 指定基础镜像                 |        FROM centos:6         |
-|    ENV     |        设置环境变量，可在后面指令使用        |        ENV key value         |
+|    ENV     |        设置环境变量，可在后面指令使用        |        ENV key=value         |
 |    COPY    |         拷贝本地文件到镜像的指定目录         |  COPY ./mysql-5.7.rpm /tmp   |
 |    RUN     |  执行Linux的shell命令，一般是安装过程的命令  |     RUN yum install gcc      |
 |   EXPOSE   | 指定容器运行时监听的端口，是给镜像使用者看的 |         EXPOSE 8080          |
@@ -4263,7 +4263,7 @@ services:
     image: mysql:8.0.36
     environment:
       MYSQL_ROOT_PASSWORD: 1234
-      TZ: Asia/Shanghai # 设置时区
+      TZ: "Asia/Shanghai" # 设置MySQL时区
     volumes:
       # $PWD 表示执行PWD命令，获取当前所在目录位置
       - "$PWD/mysql/data:/var/lib/mysql"
@@ -4272,10 +4272,16 @@ services:
       - "13306:3306"
   orderservice:
     build: ./orderservice
+    environment:
+      TZ: "Asia/Shanghai" # 设置时区，以解决jar包运行时打印的日志的时间不是中国时间的问题
   userservice:
     build: ./userservice
+    environment:
+      TZ: "Asia/Shanghai"
   gateway:
     build: ./gateway
+    environment:
+      TZ: "Asia/Shanghai"
     ports:
       - "10010:10010"
 ```

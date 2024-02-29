@@ -11,7 +11,7 @@ services:
     image: mysql:8.0.36
     environment:
       MYSQL_ROOT_PASSWORD: 1234
-      TZ: Asia/Shanghai
+      TZ: "Asia/Shanghai" # 设置MySQL时区
     volumes:
       # $PWD 表示执行PWD命令，获取当前所在目录位置
       - "$PWD/mysql/data:/var/lib/mysql"
@@ -20,9 +20,15 @@ services:
       - "13306:3306"
   orderservice:
     build: ./orderservice
+    environment:
+      TZ: "Asia/Shanghai" # 设置时区，以解决jar包运行时打印的日志的时间不是中国时间的问题
   userservice:
     build: ./userservice
+    environment:
+      TZ: "Asia/Shanghai"
   gateway:
     build: ./gateway
+    environment:
+      TZ: "Asia/Shanghai"
     ports:
       - "10010:10010"
