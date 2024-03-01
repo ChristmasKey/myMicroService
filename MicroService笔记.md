@@ -4471,12 +4471,64 @@ services:
 
 ##### 3、配置Docker信任地址
 
+我们的私服采用的是 http 协议，默认不被 Docker 信任，所以需要做一个配置
+
+```sh
+# 打开要修改的文件
+$ vi /etc/docker/daemon.json
+
+# 添加内容
+$ "insecure-registries": ["http://YourIP:8080"]
+
+# 重加载
+$ systemctl daemon-reload
+
+# 重启docker
+$ systemctl restart docker
+```
+
+配置好以后我们就可以把上面的 docker-compose.yml 文件拷贝到 /tmp/registry-ui 目录下，然后使用`docker-compose up -d`命令去构建了。
+
+等到构建成功以后，我们就可以去访问图形化界面 http://YourIP:8080 验证私有镜像仓库了。
 
 
 
+#### 拉取和推送镜像
 
-#### 向镜像仓库推送镜像
+推送镜像到私有镜像服务必须先tag，步骤如下：
+
+①重新 tag 本地镜像，名称前缀为私有仓库的地址：YourIP:8080/
+
+```sh
+$ docker tag nginx:latest YourIP:8080/nginx:1.0
+```
+
+②推送镜像
+
+```sh
+$ docker push YourIP:8080/nginx:1.0
+```
+
+③拉取镜像
+
+```sh
+$ docker pull YourIP:8080/nginx:1.0
+```
 
 
 
-#### 从镜像仓库拉取镜像
+#### 总结
+
+1、推送本地镜像到仓库前都必须<span style="color:red;">重命名（docker tag）镜像</span>，以镜像仓库地址为前缀
+
+2、镜像仓库推送前需要把仓库地址配置到 docker 服务的 daemon.json 文件中，被 docker 信任
+
+3、推送使用`docker push`命令
+
+4、拉取使用`docker pull`命令
+
+
+
+## RabbitMQ
+
+https://www.bilibili.com/video/BV1LQ4y127n4/?p=61&spm_id_from=pageDriver&vd_source=71b23ebd2cd9db8c137e17cdd381c618
