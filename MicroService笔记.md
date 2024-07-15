@@ -4618,4 +4618,42 @@ MQ（MessageQueue），中文是消息队列，字面来看就是存放消息的
 
 ### RabbitMQ快速入门
 
-123
+**概述**
+
+RabbitMQ是基于`Erlang`语言开发的开源消息通信中间件，官网地址：https://www.rabbitmq.com/
+
+
+
+#### 部署安装
+
+##### 单机部署
+
+我们在Centos7虚拟机中使用Docker来安装。
+
+1.下载镜像
+
+方式一：在线拉取
+
+```sh
+$ docker pull rabbitmq:3-management
+```
+
+
+
+方式二：从本地加载
+
+将mq.tar上传到虚拟机中，使用命令加载镜像即可：
+
+```sh
+$ docker load -i mq.tar
+```
+
+
+
+
+
+2.安装MQ
+
+
+
+##### 集群部署
