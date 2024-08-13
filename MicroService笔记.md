@@ -4531,7 +4531,7 @@ $ docker pull YourIP:8080/nginx:1.0
 
 ## RabbitMQ
 
-https://www.bilibili.com/video/BV1LQ4y127n4/?p=61&spm_id_from=pageDriver&vd_source=71b23ebd2cd9db8c137e17cdd381c618
+https://www.bilibili.com/video/BV1LQ4y127n4/?p=66&spm_id_from=pageDriver&vd_source=71b23ebd2cd9db8c137e17cdd381c618
 
 ### 初识MQ
 
@@ -4650,10 +4650,74 @@ $ docker load -i mq.tar
 
 
 
-
-
 2.安装MQ
+
+执行下面的命令来运行MQ容器：
+
+```sh
+$ docker run \
+  -e RABBITMQ_DEFAULT_USER=stone \
+  -e RABBITMQ_DEFAULT_PASS=1234 \
+  --name mq \
+  --hostname mq1 \
+  -p 15672:15672 \
+  -p 5672:5672 \
+  -d \
+  rabbitmq:3-management
+```
+
+命令解读
+
+- `docker run`：创建并运行一个容器
+- `-e RABBITMQ_DEFAULT_USER`：定义登录MQ管理页面的账号用户名
+- `-e RABBITMQ_DEFAULT_PASS`：定义登录MQ管理页面的账号密码
+- `--name`：给容器起一个名字，比如叫做 mq
+- `--hostname`：配置主机名，在集群部署模式中会使用到
+- `-p`：端口映射，这里开放了两个端口 15672是控制台页面的访问端口、5672是消息通信的端口
+- `-d`：后台运行容器
+- `rabbitmq:3-management`：镜像名称
+
+
+
+3.访问
+
+通过`docker ps`命令查看容器运行的状态：
+
+<img src="./images/查看RabbitMQ容器的运行状态.png" alt="查看RabbitMQ容器的运行状态"/>
+
+并且通过15672端口访问RabbitMQ的控制台页面：
+
+![RabbitMQ的管理页面](./images/RabbitMQ的管理页面.png)
+
+使用事先配置好的stone账号登录：
+
+![RabbitMQ的控制台主页面](./images/RabbitMQ的控制台主页面.png)
 
 
 
 ##### 集群部署
+
+TODO
+
+
+
+#### 结构和概念
+
+![RabbitMQ的结构和概念](./images/RabbitMQ的结构和概念.png)
+
+- Publisher：发布者，负责发布消息到exchange
+
+- exchange：交换机，负责路由，将Publisher发布过来的消息投递到queue中
+
+- queue：消息队列，负责缓存消息
+
+- VirtualHost：虚拟主机，负责对queue、exchange等资源进行逻辑分组，数据隔离
+
+- Consumer：消费者，负责获取和处理queue中缓存的消息
+- channel：消息通道，负责操作MQ的工具
+
+
+
+#### 常见消息模型
+
+123
