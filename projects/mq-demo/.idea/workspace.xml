@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="eb0a7eec-1643-4004-98e6-3b5bc60f5be1" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/consumer/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/consumer/src/main/java/com/stone/ConsumerApplication.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/consumer/src/main/resources/application.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/consumer/src/test/java/com/stone/hello/ConsumerTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/publisher/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/publisher/src/main/java/com/stone/PublisherApplication.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/publisher/src/main/resources/application.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/publisher/src/test/java/com/stone/hello/PublisherTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/publisher/src/test/java/com/stone/mq/spring/SpringAmqpTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../MicroService笔记.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../MicroService笔记.md" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHome" value="$PROJECT_DIR$/../../../../Maven/apache-maven-3.8.4" />
+        <option name="userSettingsFile" value="D:\Maven\apache-maven-3.8.4\conf\settings.xml" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectId" id="2ksUKzgdDwJATGE6hqHuvqFS5Yp" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;jdk.selected.JAVA_MODULE&quot;: &quot;1.8&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/WorkSpace/A_projects/mvw-git&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;onboarding.tips.debug.path&quot;: &quot;D:/StoneSpace/myMicroService/projects/mq-demo/consumer/src/main/java/com/stone/Main.java&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.30852997&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;MavenSettings&quot;,
+    &quot;spring.configuration.checksum&quot;: &quot;3a06fd391ad2f2dbd744107994677167&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RunManager" selected="JUnit.SpringAmqpTest.testSendMessage2SimpleQueue">
+    <configuration name="ConsumerTest" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.stone.hello.ConsumerTest" />
+      <module name="consumer" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.stone.hello.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="PublisherTest.testSendMessage" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="publisher" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.stone.hello.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.stone.hello" />
+      <option name="MAIN_CLASS_NAME" value="com.stone.hello.PublisherTest" />
+      <option name="METHOD_NAME" value="testSendMessage" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SpringAmqpTest.testSendMessage2SimpleQueue" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="publisher" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.stone.mq.spring.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.stone.mq.spring" />
+      <option name="MAIN_CLASS_NAME" value="com.stone.mq.spring.SpringAmqpTest" />
+      <option name="METHOD_NAME" value="testSendMessage2SimpleQueue" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2SimpleQueue" />
+        <item itemvalue="Application.ConsumerTest" />
+        <item itemvalue="JUnit.PublisherTest.testSendMessage" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="eb0a7eec-1643-4004-98e6-3b5bc60f5be1" name="Changes" comment="" />
+      <created>1724071717913</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1724071717913</updated>
+      <workItem from="1724071718991" duration="6254000" />
+      <workItem from="1724162010741" duration="5903000" />
+      <workItem from="1733753464901" duration="3741000" />
+      <workItem from="1733934240663" duration="668000" />
+      <workItem from="1734009685370" duration="9634000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

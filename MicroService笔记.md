@@ -3484,7 +3484,7 @@ Docker官方镜像仓库网速较差，我们需要设置国内镜像：
 
 ##### 操作案例
 
-==**案例**：创建运行一个Nginx容器==
+==**案例**：创建并运行一个Nginx容器==
 
 ①去docker hub查看Nginx的容器运行命令
 
@@ -4531,8 +4531,6 @@ $ docker pull YourIP:8080/nginx:1.0
 
 ## RabbitMQ
 
-https://www.bilibili.com/video/BV1LQ4y127n4/?p=66&spm_id_from=pageDriver&vd_source=71b23ebd2cd9db8c137e17cdd381c618
-
 ### 初识MQ
 
 #### 同步通讯和异步通讯
@@ -4720,4 +4718,384 @@ TODO
 
 #### 常见消息模型
 
-123
+<img src="./images/RabbitMQ官方Demo.png" alt="RabbitMQ官方Demo" style="zoom: 50%;" />
+
+MQ的官方文档中给出了7个MQ的Demo示例，前5个对应了几种不同的用法：
+
+- 基本消息队列（BasicQueue）
+
+![MQ模型-基本消息队列](./images/MQ模型-基本消息队列.png)
+
+- 工作消息队列（WorkQueue）
+
+![MQ模型-工作消息队列](./images/MQ模型-工作消息队列.png)
+
+- 发布订阅（Publish、Subscribe），又根据交换机类型不同分为三种：
+
+    - Fanout Exchange：广播
+
+    ![MQ模型-发布订阅](./images/MQ模型-发布订阅.png)
+
+    - Direct Exchange：路由
+
+    ![MQ模型-路由](./images/MQ模型-路由.png)
+
+    - Topic Exchange：主题
+
+    ![MQ模型-主题](./images/MQ模型-主题.png)
+
+
+
+##### 1.基本消息队列
+
+官方的HelloWorld案例是基于最基础的消息队列模型来实现的，只包括三个角色：
+
+- publisher：消息发布者，将消息发送到队列
+- queue：消息队列，负责接收并缓存消息
+- consumer：消息订阅者/消息消费者，负责订阅队列，处理其中的消息
+
+![基本消息队列包括3个角色](./images/基本消息队列包括3个角色.png)
+
+==**案例：**完成官方Demo中的HelloWorld案例==
+
+首先创建一个Maven父工程**mq-demo**，然后创建两个子模块**publisher**、**consumer**：
+
+![mq-demo项目的目录结构](./images/mq-demo项目的目录结构.png)
+
+然后在父工程mq-demo的pom.xml文件中引入依赖：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.stone</groupId>
+    <artifactId>mq-demo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>publisher</module>
+        <module>consumer</module>
+    </modules>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.6.6</version>
+        <relativePath/>
+    </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <!--AMQP依赖，包含RabbitMQ-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        <!--单元测试-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
+```
+
+接着在两个子模块中创建SpringBoot启动类**PublisherApplication**、**ConsumerApplication**
+
+以上准备工作完成以后，我们分别在两个子模块的`test`目录下创建测试类，并编写相应的功能代码：
+
+消息发送 **PublisherTest**
+
+```java
+package com.stone.hello;
+
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
+
+public class PublisherTest {
+
+    @Test
+    public void testSendMessage() throws IOException, TimeoutException {
+        // 1.建立连接
+        ConnectionFactory factory = new ConnectionFactory();
+        // 1.1.设置连接参数：主机名、端口号、vhost、用户名、密码
+        factory.setHost("192.168.157.128");
+        factory.setPort(5672);
+        factory.setVirtualHost("/");
+        factory.setUsername("stone");
+        factory.setPassword("1234");
+        // 1.2.建立连接
+        Connection connection = factory.newConnection();
+
+        // 2.创建通道Channel
+        Channel channel = connection.createChannel();
+
+        // 3.创建队列
+        String queueName = "simple.queue";
+        channel.queueDeclare(queueName, false, false, false, null);
+
+        // 4.发送消息
+        String message = "hello, rabbitmq!";
+        channel.basicPublish("", queueName, null, message.getBytes());
+        System.out.println("发送消息成功：【" + message + "】");
+
+        // 5.关闭通道和连接
+        channel.close();
+        connection.close();
+    }
+}
+```
+
+消息接收 **ConsumerTest**
+
+```java
+package com.stone.hello;
+
+import com.rabbitmq.client.*;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
+
+public class ConsumerTest {
+
+    public static void main(String[] args) throws IOException, TimeoutException {
+        // 1.建立连接
+        ConnectionFactory factory = new ConnectionFactory();
+        // 1.1.设置连接参数：主机名、端口号、vhost、用户名、密码
+        factory.setHost("192.168.157.128");
+        factory.setPort(5672);
+        factory.setVirtualHost("/");
+        factory.setUsername("stone");
+        factory.setPassword("1234");
+        // 1.2.建立连接
+        Connection connection = factory.newConnection();
+
+        // 2.创建通道Channel
+        Channel channel = connection.createChannel();
+
+        // 3.创建队列
+        //（因为Publisher和Consumer的启动先后顺序不确定，所以这里创建队列是为了避免项目启动时队列还没有被创建出来的保险措施）
+        //（如果队列已经被创建了，那么此队列不会被重复创建）
+        String queueName = "simple.queue";
+        channel.queueDeclare(queueName, false, false, false, null);
+
+        channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope,
+                                       AMQP.BasicProperties properties, byte[] body) throws IOException {
+                // 5.处理消息
+                String message = new String(body);
+                System.out.println("接收到消息：【" + message + "】");
+            }
+        });
+
+        System.out.println("等待接收消息...");
+    }
+}
+```
+
+完成以后，我们先来测试消息发送功能：加上断点后，启动PublisherTest，依次可以看到
+
+**Connection被创建**
+
+![PublisherTest断点1](./images/PublisherTest断点1.png)
+
+
+
+![PublisherTest创建连接](./images/PublisherTest创建连接.png)
+
+**Channel被创建**
+
+![PublisherTest断点2](./images/PublisherTest断点2.png)
+
+
+
+![PublisherTest创建通道](./images/PublisherTest创建通道.png)
+
+**Queue被创建**
+
+![PublisherTest断点3](./images/PublisherTest断点3.png)
+
+
+
+![PublisherTest创建队列](./images/PublisherTest创建队列.png)
+
+**消息被发送**
+
+![PublisherTest控制台打印结果](./images/PublisherTest控制台打印结果.png)
+
+
+
+![PublisherTest发送消息](./images/PublisherTest发送消息.png)
+
+
+
+然后我们再来测试消息订阅功能：ConsumerTest也会依次创建Connection、Channel，并找到已经被创建的Queue读取消息
+
+![ConsumerTest控制台打印结果](./images/ConsumerTest控制台打印结果.png)
+
+
+
+同时Queue中的消息是一旦已经被消费了，就会被从Queue中移除（“阅后即焚”）
+
+![ConsumerTest订阅消息](./images/ConsumerTest订阅消息.png)
+
+
+
+##### 总结
+
+基本消息队列的消息发送流程：
+
+​	1.建立Connection
+
+​	2.创建Channel
+
+​	3.利用Channel声明队列
+
+​	4.利用Channel向队列发送消息
+
+
+
+基本消息队列的消息接收流程：
+
+​	1.建立Connection
+
+​	2.创建Channel
+
+​	3.利用Channel声明队列
+
+​	4.定义Consumer的消费行为**handleDelivery()**
+
+​	5.利用Channel将消费者与队列绑定
+
+
+
+### Spring AMQP
+
+#### 什么是Spring AMQP
+
+> **AMQP**
+>
+> Advanced Message Queuing Protocol，是用于在应用程序或之间传递业务消息的开放标准。
+>
+> 该协议与语言和平台无关，更符合微服务中独立性的要求。
+
+![AMQP和SpringAMQP](./images/AMQP和SpringAMQP.png)
+
+Spring AMQP 是基于**AMQP**协议定义的一套API规范，提供了模板来发送和接收消息。
+
+包含两部分，其中**spring-amqp**是基础抽象，**spring-rabbit**是底层的默认实现。
+
+[Spring AMQP官网](https://spring.io/projects/spring-amqp)
+
+
+
+#### 案例
+
+==利用Spring AMQP实现基本消息队列功能==
+
+步骤流程如下：
+
+1.在父工程引入spring-amqp的依赖
+
+```xml
+<!--AMQP依赖，包含RabbitMQ-->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-amqp</artifactId>
+</dependency>
+```
+
+
+
+2.在publisher服务中利用RabbitTemplate发送消息到simple.queue这个队列
+
+在publisher服务中编写application.yml，添加mq连接信息：
+
+```yml
+# mq连接信息
+spring:
+  rabbitmq:
+    # 主机名
+    host: 192.168.157.128
+    # 端口
+    port: 5672
+    # 虚拟主机
+    virtual-host: /
+    # 用户名
+    username: stone
+    # 密码
+    password: 1234
+```
+
+在publisher服务中新建一个测试类，编写测试方法：
+
+```java
+package com.stone.mq.spring;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+public class SpringAmqpTest {
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Test
+    public void testSendMessage2SimpleQueue() {
+        String queueName = "simple.queue";
+        String message = "hello, spring amqp";
+
+        rabbitTemplate.convertAndSend(queueName, message);
+    }
+}
+```
+
+成功运行后，在控制台页面查看队列消息
+
+![RabbitTemplate发送消息](./images/RabbitTemplate发送消息.png)
+
+<span style="color:red;">**注意！**</span>RabbitTemplate只会发送消息，不会创建队列，所以在运行测试类之前我们需要到控制台页面手动创建**simple.queue**队列，或者通过如下注解代码创建队列：
+
+```java
+@Test
+@RabbitListener(queuesToDeclare = {@Queue(value = "simple.queue", durable = "false")})
+public void testSendMessage2SimpleQueue() {
+    String queueName = "simple.queue";
+    String message = "hello, spring amqp";
+
+    rabbitTemplate.convertAndSend(queueName, message);
+}
+```
+
+其中：@RabbitListener注解是用来监听消息队列的，
+
+queuesToDeclare属性可以定义被监听的队列如果不存在则新创建（和@Queue搭配使用，其中durable属性指定队列是否持久化）。
+
+
+
+3.在consumer服务中编写消费逻辑，绑定simple.queue这个队列
+
+https://www.bilibili.com/video/BV1LQ4y127n4?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=70

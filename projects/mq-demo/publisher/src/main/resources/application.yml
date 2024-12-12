@@ -1,0 +1,17 @@
+logging:
+  pattern:
+    dateformat: MM-dd HH:mm:ss
+
+# mq连接信息
+spring:
+  rabbitmq:
+    # 主机名
+    host: 192.168.157.128
+    # 端口
+    port: 5672
+    # 虚拟主机
+    virtual-host: /
+    # 用户名
+    username: stone
+    # 密码
+    password: 1234
