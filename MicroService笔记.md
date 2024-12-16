@@ -4961,7 +4961,7 @@ public class ConsumerTest {
 
 
 
-##### 总结
+##### 2.总结
 
 基本消息队列的消息发送流程：
 
@@ -5009,7 +5009,7 @@ Spring AMQP 是基于**AMQP**协议定义的一套API规范，提供了模板来
 
 
 
-#### 案例
+#### 基本消息队列
 
 ==利用Spring AMQP实现基本消息队列功能==
 
@@ -5031,7 +5031,7 @@ Spring AMQP 是基于**AMQP**协议定义的一套API规范，提供了模板来
 
 在publisher服务中编写application.yml，添加mq连接信息：
 
-```yml
+```yaml
 # mq连接信息
 spring:
   rabbitmq:
@@ -5096,6 +5096,210 @@ queuesToDeclare属性可以定义被监听的队列如果不存在则新创建�
 
 
 
-3.在consumer服务中编写消费逻辑，绑定simple.queue这个队列
+3.在consumer服务中编写消费逻辑，绑定并监听simple.queue这个队列
 
-https://www.bilibili.com/video/BV1LQ4y127n4?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=70
+在consumer服务中编写application.yml，添加mq连接信息：
+
+```yaml
+# mq连接信息
+spring:
+  rabbitmq:
+    # 主机名
+    host: 192.168.157.128
+    # 端口
+    port: 5672
+    # 虚拟主机
+    virtual-host: /
+    # 用户名
+    username: stone
+    # 密码
+    password: 1234
+```
+
+在consumer服务中新建一个类，编写消费逻辑：
+
+（==由于Consumer服务是一个持续监听队列的运行程序，所以我们可以通过Component注解将其放到Spring容器中管理运行==）
+
+```java
+package com.stone.listener;
+
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Component;
+
+@Component
+public class SpringRabbitListener {
+
+    @RabbitListener(queues = "simple.queue")
+    public void listenSimpleQueue(String msg) {
+        System.out.println("消费者接收到simple.queue的消息：【" + msg + "】");
+    }
+}
+```
+
+运行consumer服务的启动类**ConsumerApplication**，并查看控制台输出：
+
+![运行Consumer服务控制台打印](./images/运行Consumer服务控制台打印.png)
+
+<span style="color:red;">注意！消息一旦被消费就会从队列中删除，RabbitMQ没有消息回溯功能</span>
+
+
+
+#### 工作队列
+
+Work Queue，工作队列，通过绑定多个消费者，来提高消息处理速度，避免队列消息堆积。
+
+![消息队列模型-工作队列](./images/消息队列模型-工作队列.png)
+
+==**案例：**模拟WorkQueue，实现一个队列绑定多个消费者==
+
+步骤流程如下：
+
+1.在publisher服务中定义测试方法，每秒产生50条消息，发送到simple.queue
+
+```java
+@Test
+public void testSendMessage2WorkQueue() throws InterruptedException {
+    String queueName = "simple.queue";
+    String message = "hello, message__";
+    for (int i = 0; i < 50; i++) {
+        rabbitTemplate.convertAndSend(queueName, message + i);
+        Thread.sleep(20);
+    }
+}
+```
+
+2.在consumer服务中定义两个消息监听者，都监听simple.queue队列
+
+3.消费者1每秒处理50条消息，消费者2每秒处理10条消息
+
+```java
+@RabbitListener(queues = "simple.queue")
+public void listenWorkQueue1(String msg) throws InterruptedException {
+    System.out.println("消费者1接收到消息：【" + msg + "】 " + LocalTime.now());
+    Thread.sleep(20);
+}
+
+@RabbitListener(queues = "simple.queue")
+public void listenWorkQueue2(String msg) throws InterruptedException {
+    // 使用err来区分两个方法中控制台打印输出的颜色
+    System.err.println("消费者2......接收到消息：【" + msg + "】 " + LocalTime.now());
+    Thread.sleep(100);
+}
+```
+
+最终，consumer服务的控制台打印结果如下：
+
+![consumer服务的运行控制台打印结果正常](./images/consumer服务的运行控制台打印结果正常.png)
+
+从结果中可以看出：消费者1花费了一秒多的时间处理了25条奇数信息，消费者2花费了两秒多的时间处理了25条偶数信息，两者处理的信息数量很平均，消费者1并没有发挥出全部的性能。
+
+<span style="color:blue;">这是由于RabbitMQ中存在一种“**消息预取**”机制</span>，该机制使得绑定到队列的每个消费者都可以将队列中的消息预先取出，再逐个处理。这就导致所有消费者平均分配队列中的消息，并且性能较差的消费者需要花费更多的时间来处理多分配到的消息。
+
+<span style="color:green;">通过在application.yml文件中设置**preFetch**这个值，可以控制预取消息数的上限：</span>
+
+```yaml
+# mq连接信息
+spring:
+  rabbitmq:
+    # 主机名
+    host: 192.168.157.128
+    # 端口
+    port: 5672
+    # 虚拟主机
+    virtual-host: /
+    # 用户名
+    username: stone
+    # 密码
+    password: 1234
+    listener:
+      simple:
+        # 设置消息预取上限，每次只能获取一条消息，处理完成才能获取下一条消息
+        prefetch: 1
+```
+
+重新运行服务后，consumer服务的控制台打印结果如下：消费者2只处理了10条消息，消费者1处理了其余全部消息。
+
+![consumer服务的运行控制台最终打印结果](./images/consumer服务的运行控制台最终打印结果.png)
+
+
+
+<span style="color:red;">**踩坑！！！**</span>
+
+案例中的publisher服务里的消息发送测试类的完整代码如下：
+
+```java
+package com.stone.mq.spring;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.amqp.rabbit.annotation.Queue;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+public class SpringAmqpTest {
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Test
+    @RabbitListener(queuesToDeclare = {@Queue(value = "simple.queue", durable = "false")})
+    public void testSendMessage2SimpleQueue() {
+        String queueName = "simple.queue";
+        String message = "hello, spring amqp";
+
+        rabbitTemplate.convertAndSend(queueName, message);
+    }
+
+    @Test
+    public void testSendMessage2WorkQueue() throws InterruptedException {
+        String queueName = "simple.queue";
+        String message = "hello, message__";
+        for (int i = 0; i < 50; i++) {
+            rabbitTemplate.convertAndSend(queueName, message + i);
+            Thread.sleep(20);
+        }
+    }
+}
+```
+
+启动运行后，consumer服务的控制台打印如下：
+
+![Consumer服务的运行控制台打印结果问题](./images/Consumer服务的运行控制台打印结果问题.png)
+
+但是**testSendMessage2SimpleQueue()**并没有被启动运行，怎么会向消息队列中发送消息呢？
+
+==经过测试后，发现问题发生在**@RabbitListener**注解上！当该注解被开启后，consumer服务的控制台打印就会出现上图中的现象；当该注解被注释掉后，consumer服务的控制台打印结果是正常的。**根本原因：使用@RabbitListener注解的方法，会在消息到达队列时自动执行！！！**==
+
+当**testSendMessage2WorkQueue()**方法向队列发送消息后，立即进入线程休眠，此时**@RabbitListener**注解监听到了队列中的新消息，便开始占用线程执行方法。
+
+> 问：当一个方法调用线程休眠后, 添加@RabbitListener注解的方法会自动执行
+>
+> ——*来自AI的解释*
+>
+> 答：
+>
+> 在Spring AMQP（RabbitMQ的Spring支持）中，**@RabbitListener注解用于标记一个方法，该方法将作为消息监听器来处理从RabbitMQ队列接收到的消息**。这些监听器方法是由Spring的消息监听容器管理的，通常会在应用程序启动时就开始监听指定的队列，并且当有消息到达时异步地执行。
+>
+> 关于你提到的“方法调用线程休眠后”，这里需要明确几个关键点：
+>
+> ‌1.线程休眠‌：如果一个线程执行到某个点并调用如Thread.sleep()方法，该线程会被挂起指定的时间。这并不影响其他线程或进程的执行。
+>
+> ‌2.@RabbitListener的执行‌：@RabbitListener注解的方法是由Spring的消息监听容器异步调用的。这意味着它们的执行与任何特定线程的休眠状态无关。只要RabbitMQ队列中有消息，并且监听容器是活动的，那么这些方法就会在适当的时机被调用。
+>
+> ‌3.并发与线程管理‌：在Spring应用中，通常会有多个线程处理不同的任务，包括处理HTTP请求、执行定时任务、以及监听和处理消息队列中的消息等。线程休眠通常用于模拟长时间运行的任务或延迟处理，但它不会阻止其他线程或任务（如消息监听器）的执行。
+>
+> 综上所述，如果你有一个方法调用了线程休眠，这不会直接影响通过@RabbitListener注解的方法的执行。@RabbitListener注解的方法会在消息到达时被RabbitMQ的消息监听容器自动调用，而这个调用是异步的，与任何其他线程的休眠或活动状态无关。
+>
+> 如果你在实际应用中遇到了与预期不符的行为，可能需要检查以下几个方面：
+>
+> 确保RabbitMQ服务是运行中的，并且队列中有消息可供消费。
+> 检查Spring配置，确保@RabbitListener注解的方法被正确注册为消息监听器。
+> 检查是否有其他配置或代码逻辑影响了消息监听器的行为，比如消息确认机制、错误处理、或消息队列的配置等。
+
+
+
+#### 发布订阅模型
+
+https://www.bilibili.com/video/BV1LQ4y127n4?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=72
