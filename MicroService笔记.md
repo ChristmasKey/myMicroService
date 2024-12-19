@@ -5302,4 +5302,266 @@ public class SpringAmqpTest {
 
 #### 发布订阅模型
 
-https://www.bilibili.com/video/BV1LQ4y127n4?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=72
+发布订阅模型与前两个队列模型的区别在于：发布订阅模型允许将同一个消息发送给多个消费者，实现方式是加入了exchange（交换机）。
+
+![发布订阅消息模型](./images/发布订阅消息模型.png)
+
+常见的exchange类型包括：
+
+- Fanout：广播
+- Direct：路由
+- Topic：话题
+
+不同类型的exchange，它们的消息转发规则略有差异；
+
+<span style="color:red;">但是注意</span>：不论是哪种类型的exchange，都只负责消息转发，而不是存储，转发失败则消息丢失。
+
+
+
+##### Fanout Exchange
+
+Fanout Exchange会将接收到的消息路由到每一个与其绑定的Queue
+
+![FanoutExchange模型](./images/FanoutExchange模型.png)
+
+==案例：通过Spring AMQP演示Fanout Exchange的使用==
+
+步骤流程如下：
+
+![FanoutExchange演示案例](./images/FanoutExchange演示案例.png)
+
+1.在consumer服务中，利用代码声明队列、交换机，并将两者绑定
+
+在consumer服务中创建**FanoutConfig**类，添加**@Configuration**注解，并声明FanoutExchange、Queue和绑定关系对象Binding：
+
+```java
+package com.stone.config;
+
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.FanoutExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class FanoutConfig {
+
+    // 声明itcast.fanout交换机
+    @Bean
+    public FanoutExchange fanoutExchange() {
+        return new FanoutExchange("itcast.fanout");
+    }
+
+    // 声明第1个队列
+    @Bean
+    public Queue fanoutQueue1() {
+        return new Queue("fanout.queue1");
+    }
+
+    // 绑定第1个队列到交换机
+    @Bean
+    public Binding fanoutBinding1(Queue fanoutQueue1, FanoutExchange fanoutExchange) {
+        return BindingBuilder.bind(fanoutQueue1).to(fanoutExchange);
+    }
+
+    // 声明第2个队列
+    @Bean
+    public Queue fanoutQueue2() {
+        return new Queue("fanout.queue2");
+    }
+
+    // 绑定第2个队列到交换机
+    @Bean
+    public Binding fanoutBinding2(Queue fanoutQueue2, FanoutExchange fanoutExchange) {
+        return BindingBuilder.bind(fanoutQueue2).to(fanoutExchange);
+    }
+}
+```
+
+运行consumer服务后可以在RabbitMQ的控制台页面可以看到对应的交换机、队列以及绑定关系：
+
+![FanoutExchange交换机、队列及其绑定关系](./images/FanoutExchange交换机、队列及其绑定关系.png)
+
+
+
+2.在consumer服务中，编写两个消费者方法，分别监听fanout.queue1和fanout.queue2
+
+```java
+package com.stone.listener;
+
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalTime;
+
+@Component
+public class SpringRabbitListener {
+
+    //@RabbitListener(queues = "simple.queue")
+    //public void listenSimpleQueue(String msg) {
+    //    System.out.println("消费者接收到simple.queue的消息：【" + msg + "】");
+    //}
+
+    //@RabbitListener(queues = "simple.queue")
+    //public void listenWorkQueue1(String msg) throws InterruptedException {
+    //    System.out.println("消费者1接收到消息：【" + msg + "】 " + LocalTime.now());
+    //    Thread.sleep(20);
+    //}
+
+    //@RabbitListener(queues = "simple.queue")
+    //public void listenWorkQueue2(String msg) throws InterruptedException {
+    //    // 使用err来区分两个方法中控制台打印输出的颜色
+    //    System.err.println("消费者2......接收到消息：【" + msg + "】 " + LocalTime.now());
+    //    Thread.sleep(100);
+    //}
+
+    @RabbitListener(queues = "fanout.queue1")
+    public void listenFanoutQueue1(String msg) {
+        System.out.println("消费者接收到fanout.queue1的消息：【" + msg + "】");
+    }
+
+    @RabbitListener(queues = "fanout.queue2")
+    public void listenFanoutQueue2(String msg) {
+        System.out.println("消费者接收到fanout.queue2的消息：【" + msg + "】");
+    }
+}
+```
+
+
+
+3.在publisher中编写测试方法，向itcast.fanout发送消息
+
+```java
+@Test
+public void testSendMessage2FanoutExchange() {
+    // 交换机名称
+    String exchangeName = "itcast.fanout";
+    // 路由键（用于将消息从交换机路由到特定队列。）
+    String routingKey = "";
+    // 消息内容
+    String message = "hello, fanout exchange";
+    // 发送消息
+    rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
+}
+```
+
+执行该方法并查看consumer服务的运行控制台，可以看到两个队列都收到了交换机路由过来的消息：
+
+![通过Fanout交换机发送消息_consumer服务的运行控制台](./images/通过Fanout交换机发送消息_consumer服务的运行控制台.png)
+
+
+
+**总结**
+
+1、交换机的作用
+
+- 接收publisher服务发送的消息
+- 将消息按照规则路由到预支绑定的队列
+- 不能缓存消息，路由失败，消息丢失
+- FanoutExchange会将消息路由到所有与之绑定的队列
+
+
+
+##### Direct Exchange
+
+Direct Exchange会将接收到的消息根据规则路由到**指定的Queue**，因此称为路由模式（routes）。
+
+- 每一个Queue都会与Exchange设置一个**BindingKey**
+- publisher在发送消息时，通过指定**RoutingKey**将消息发送到相应的队列
+- Exchange会将消息路由到BindingKey与消息中的RoutingKey一致的队列
+
+![DirectExchange模型](./images/DirectExchange模型.png)
+
+==案例：利用Spring AMQP演示Direct Exchange的使用==
+
+步骤流程如下：
+
+![DirectExchange演示案例](./images/DirectExchange演示案例.png)
+
+1.利用@RabbitListener声明Exchange、Queue、RoutingKey
+
+2.在consumer服务中，编写两个消费者方法，分别监听direct.queue1和direct.queue2
+
+```java
+package com.stone.listener;
+
+import org.springframework.amqp.core.ExchangeTypes;
+import org.springframework.amqp.rabbit.annotation.Exchange;
+import org.springframework.amqp.rabbit.annotation.Queue;
+import org.springframework.amqp.rabbit.annotation.QueueBinding;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalTime;
+
+@Component
+public class SpringRabbitListener {
+    
+    //...略
+    
+    @RabbitListener(bindings = @QueueBinding(value = @Queue(name = "direct.queue1"),
+            exchange = @Exchange(name = "itcast.direct", type = ExchangeTypes.DIRECT),
+            key = {"red", "blue"}))
+    public void listenDirectQueue1(String msg) {
+        System.out.println("消费者接收到direct.queue1的消息：【" + msg + "】");
+    }
+
+    @RabbitListener(bindings = @QueueBinding(value = @Queue(name = "direct.queue2"),
+            exchange = @Exchange(name = "itcast.direct", type = ExchangeTypes.DIRECT),
+            key = {"red", "yellow"}))
+    public void listenDirectQueue2(String msg) {
+        System.out.println("消费者接收到direct.queue2的消息：【" + msg + "】");
+    }
+}
+```
+
+运行consumer服务后可以在RabbitMQ的控制台页面可以看到对应的交换机、队列以及绑定关系：
+
+![DirectExchange交换机、队列及其绑定关系](./images/DirectExchange交换机、队列及其绑定关系.png)
+
+
+
+3.在publisher中编写测试方法，向itcast.direct发送消息
+
+```java
+@Test
+public void testSendMessage2DirectExchange() {
+    // 交换机名称
+    String exchangeName = "itcast.direct";
+    // 路由键（用于将消息从交换机路由到特定队列。）
+    String routingKey = "blue";
+    // 消息内容
+    String message = "hello, blue";
+    // 发送消息
+    rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
+}
+```
+
+执行该方法并查看consumer服务的运行控制台，可以看到只有绑定了blue键值的队列收到了交换机路由过来的消息：
+
+![通过Direct交换机发送消息_consumer服务的运行控制台](./images/通过Direct交换机发送消息_consumer服务的运行控制台.png)
+
+
+
+**总结**
+
+1、Direct交换机与Fanout交换机的差异
+
+- Fanout交换机将消息路由给每一个与之绑定的队列
+- Direct交换机根据RoutingKey判断路由给哪些队列
+- 如果多个队列具有相同的RoutingKey，则与Fanout功能类似
+
+
+
+2、基于@RabbitListener注解声明队列和交换机时，有哪些常见的注解
+
+- @Queue
+- @QueueBinding
+- @Exchange
+
+
+
+##### Topic Exchange
+
+https://www.bilibili.com/video/BV1LQ4y127n4?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=75
