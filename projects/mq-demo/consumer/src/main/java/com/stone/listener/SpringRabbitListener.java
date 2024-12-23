@@ -40,18 +40,31 @@ public class SpringRabbitListener {
     //    System.out.println("消费者接收到fanout.queue2的消息：【" + msg + "】");
     //}
 
-    @RabbitListener(bindings = @QueueBinding(value = @Queue(name = "direct.queue1"),
-            exchange = @Exchange(name = "itcast.direct", type = ExchangeTypes.DIRECT),
-            key = {"red", "blue"}))
-    public void listenDirectQueue1(String msg) {
-        System.out.println("消费者接收到direct.queue1的消息：【" + msg + "】");
+    //@RabbitListener(bindings = @QueueBinding(value = @Queue(name = "direct.queue1"),
+    //        exchange = @Exchange(name = "itcast.direct", type = ExchangeTypes.DIRECT),
+    //        key = {"red", "blue"}))
+    //public void listenDirectQueue1(String msg) {
+    //    System.out.println("消费者接收到direct.queue1的消息：【" + msg + "】");
+    //}
+
+    //@RabbitListener(bindings = @QueueBinding(value = @Queue(name = "direct.queue2"),
+    //        exchange = @Exchange(name = "itcast.direct", type = ExchangeTypes.DIRECT),
+    //        key = {"red", "yellow"}))
+    //public void listenDirectQueue2(String msg) {
+    //    System.out.println("消费者接收到direct.queue2的消息：【" + msg + "】");
+    //}
+
+    @RabbitListener(bindings = @QueueBinding(value = @Queue(name = "topic.queue1"),
+            exchange = @Exchange(name = "itcast.topic", type = ExchangeTypes.TOPIC),
+            key = "china.#"))
+    public void listenTopicQueue1(String msg) {
+        System.out.println("消费者接收到topic.queue1的消息：【" + msg + "】");
     }
 
-    @RabbitListener(bindings = @QueueBinding(value = @Queue(name = "direct.queue2"),
-            exchange = @Exchange(name = "itcast.direct", type = ExchangeTypes.DIRECT),
-            key = {"red", "yellow"}))
-    public void listenDirectQueue2(String msg) {
-        System.out.println("消费者接收到direct.queue2的消息：【" + msg + "】");
+    @RabbitListener(bindings = @QueueBinding(value = @Queue(name = "topic.queue2"),
+            exchange = @Exchange(name = "itcast.topic", type = ExchangeTypes.TOPIC),
+            key = "#.news"))
+    public void listenTopicQueue2(String msg) {
+        System.out.println("消费者接收到topic.queue2的消息：【" + msg + "】");
     }
-
 }

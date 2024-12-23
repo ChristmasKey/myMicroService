@@ -5,10 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="eb0a7eec-1643-4004-98e6-3b5bc60f5be1" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/consumer/src/main/java/com/stone/config/FanoutConfig.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../MicroService笔记.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../MicroService笔记.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/consumer/src/main/java/com/stone/config/FanoutConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/consumer/src/main/java/com/stone/config/FanoutConfig.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/consumer/src/main/java/com/stone/listener/SpringRabbitListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/consumer/src/main/java/com/stone/listener/SpringRabbitListener.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/publisher/src/main/java/com/stone/PublisherApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/publisher/src/main/java/com/stone/PublisherApplication.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/publisher/src/test/java/com/stone/mq/spring/SpringAmqpTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/publisher/src/test/java/com/stone/mq/spring/SpringAmqpTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -69,7 +71,7 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected="JUnit.SpringAmqpTest.testSendMessage2DirectExchange">
+  <component name="RunManager" selected="JUnit.SpringAmqpTest.testSendMessage2ObjectQueue">
     <configuration name="SpringAmqpTest.testSendMessage2DirectExchange" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="publisher" />
       <extension name="coverage">
@@ -102,7 +104,7 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SpringAmqpTest.testSendMessage2SimpleQueue" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="SpringAmqpTest.testSendMessage2ObjectQueue" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="publisher" />
       <extension name="coverage">
         <pattern>
@@ -112,13 +114,13 @@
       </extension>
       <option name="PACKAGE_NAME" value="com.stone.mq.spring" />
       <option name="MAIN_CLASS_NAME" value="com.stone.mq.spring.SpringAmqpTest" />
-      <option name="METHOD_NAME" value="testSendMessage2SimpleQueue" />
+      <option name="METHOD_NAME" value="testSendMessage2ObjectQueue" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SpringAmqpTest.testSendMessage2WorkQueue" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="SpringAmqpTest.testSendMessage2TopicExchange" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="publisher" />
       <extension name="coverage">
         <pattern>
@@ -128,7 +130,7 @@
       </extension>
       <option name="PACKAGE_NAME" value="com.stone.mq.spring" />
       <option name="MAIN_CLASS_NAME" value="com.stone.mq.spring.SpringAmqpTest" />
-      <option name="METHOD_NAME" value="testSendMessage2WorkQueue" />
+      <option name="METHOD_NAME" value="testSendMessage2TopicExchange" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -149,11 +151,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2DirectExchange" />
+        <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2ObjectQueue" />
         <item itemvalue="Spring Boot.ConsumerApplication" />
+        <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2TopicExchange" />
+        <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2DirectExchange" />
         <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2FanoutExchange" />
-        <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2WorkQueue" />
-        <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2SimpleQueue" />
       </list>
     </recent_temporary>
   </component>
@@ -174,7 +176,8 @@
       <workItem from="1734358116731" duration="8094000" />
       <workItem from="1734537596089" duration="2154000" />
       <workItem from="1734541874539" duration="1044000" />
-      <workItem from="1734613680428" duration="7109000" />
+      <workItem from="1734613680428" duration="7329000" />
+      <workItem from="1734962719031" duration="6614000" />
     </task>
     <servers />
   </component>

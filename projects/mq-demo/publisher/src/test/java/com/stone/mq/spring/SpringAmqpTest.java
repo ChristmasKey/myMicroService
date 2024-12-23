@@ -7,6 +7,9 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @SpringBootTest
 public class SpringAmqpTest {
 
@@ -54,5 +57,26 @@ public class SpringAmqpTest {
         String message = "hello, blue";
         // 发送消息
         rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
+    }
+
+    @Test
+    public void testSendMessage2TopicExchange() {
+        // 交换机名称
+        String exchangeName = "itcast.topic";
+        // 路由键（用于将消息从交换机路由到特定队列。）
+        String routingKey = "china.weather";
+        // 消息内容
+        String message = "hello, topic exchange";
+        // 发送消息
+        rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
+    }
+
+    @Test
+    public void testSendMessage2ObjectQueue() {
+        String queueName = "object.queue";
+        Map<String, Object> message = new HashMap<>();
+        message.put("name", "柳岩");
+        message.put("age", 18);
+        rabbitTemplate.convertAndSend(queueName, message);
     }
 }

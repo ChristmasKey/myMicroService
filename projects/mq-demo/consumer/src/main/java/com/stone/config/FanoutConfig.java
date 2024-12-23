@@ -39,4 +39,10 @@ public class FanoutConfig {
     public Binding fanoutBinding2(Queue fanoutQueue2, FanoutExchange fanoutExchange) {
         return BindingBuilder.bind(fanoutQueue2).to(fanoutExchange);
     }
+
+    // 声明一个队列，用于观察队列中的消息
+    @Bean
+    public Queue objectQueue() {
+        return new Queue("object.queue");
+    }
 }

@@ -5564,4 +5564,190 @@ public void testSendMessage2DirectExchange() {
 
 ##### Topic Exchange
 
-https://www.bilibili.com/video/BV1LQ4y127n4?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=75
+TopicExchange与DirectExchange类似，<span style="color:blue;">区别在于routingKey必须是多个单词的列表，并且以==.==分割</span>。
+
+Queue与Exchange指定BindingKey时，可以使用通配符：
+
+<span style="color:red;">#：代指0个或多个单词</span>
+
+<span style="color:red;">*：代指一个单词</span>
+
+![TopicExchange模型](./images/TopicExchange模型.png)
+
+==案例：利用SpringAMQP演示TopicExchange的使用==
+
+![TopicExchange演示案例](./images/TopicExchange演示案例.png)
+
+步骤流程如下：
+
+1.利用@RabbitListener声明Exchange、Queue、RoutingKey
+
+2.在consumer服务中，编写两个消费者方法，分别监听topic.queue1和topic.queue2
+
+```java
+package com.stone.listener;
+
+import org.springframework.amqp.core.ExchangeTypes;
+import org.springframework.amqp.rabbit.annotation.Exchange;
+import org.springframework.amqp.rabbit.annotation.Queue;
+import org.springframework.amqp.rabbit.annotation.QueueBinding;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalTime;
+
+@Component
+public class SpringRabbitListener {
+
+    //...略
+
+    @RabbitListener(bindings = @QueueBinding(value = @Queue(name = "topic.queue1"),
+            exchange = @Exchange(name = "itcast.topic", type = ExchangeTypes.TOPIC),
+            key = "china.#"))
+    public void listenTopicQueue1(String msg) {
+        System.out.println("消费者接收到topic.queue1的消息：【" + msg + "】");
+    }
+
+    @RabbitListener(bindings = @QueueBinding(value = @Queue(name = "topic.queue2"),
+            exchange = @Exchange(name = "itcast.topic", type = ExchangeTypes.TOPIC),
+            key = "#.news"))
+    public void listenTopicQueue2(String msg) {
+        System.out.println("消费者接收到topic.queue2的消息：【" + msg + "】");
+    }
+}
+```
+
+运行consumer服务后可以在RabbitMQ的控制台页面可以看到对应的交换机、队列以及绑定关系：
+
+![TopicExchange交换机、队列及其绑定关系](./images/TopicExchange交换机、队列及其绑定关系.png)
+
+
+
+3.在publisher中编写测试方法，向itcast.topic发送消息
+
+```java
+@Test
+public void testSendMessage2TopicExchange() {
+    // 交换机名称
+    String exchangeName = "itcast.topic";
+    // 路由键（用于将消息从交换机路由到特定队列。）
+    String routingKey = "china.news";
+    // 消息内容
+    String message = "hello, topic exchange";
+    // 发送消息
+    rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
+}
+```
+
+执行该方法并查看consumer服务的运行控制台，可以看到两个队列都收到了消息：
+
+![通过Topic交换机发送消息_consumer服务的运行控制台1](./images/通过Topic交换机发送消息_consumer服务的运行控制台1.png)
+
+但如果我们将测试方法中的**routingKey**改成“china.weather”，则可以看到只有queue1队列收到了消息：
+
+![通过Topic交换机发送消息_consumer服务的运行控制台2](./images/通过Topic交换机发送消息_consumer服务的运行控制台2.png)
+
+
+
+#### 消息转换器
+
+==案例：测试发送Object类型的消息==
+
+说明：在Spring AMQP的发送方法中，消息参数的类型是**Object**，也就是说我们可以发送任意对象类型的消息，Spring AMQP会帮我们序列化为字节后发送。
+
+1.为了方便观察，我们不再采用@RabbitListener注解来声明队列，而是采用Config类来声明
+
+```java
+package com.stone.config;
+
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.FanoutExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class FanoutConfig {
+    
+    //...略
+    
+    // 声明一个队列，用于观察队列中的消息
+    @Bean
+    public Queue objectQueue() {
+        return new Queue("object.queue");
+    }
+}
+```
+
+启动consumer服务后可以在页面控制台看到被声明出来的该队列：
+
+![声明的Object队列](./images/声明的Object队列.png)
+
+
+
+2.在publisher服务中编写测试方法，向object.queue发送Map类型的消息
+
+```java
+@Test
+public void testSendMessage2ObjectQueue() {
+    String queueName = "object.queue";
+    Map<String, Object> message = new HashMap<>();
+    message.put("name", "柳岩");
+    message.put("age", 18);
+    rabbitTemplate.convertAndSend(queueName, message);
+}
+```
+
+执行该方法并在页面控制台中查看队列中的消息：
+
+![object.queue队列中的消息](./images/object.queue队列中的消息.png)
+
+可以看到，由于RabbitMQ只支持处理字节类型的消息，所以Spring默认会使用JDK的序列化对消息中的对象进行序列化处理，而这存在以下问题：
+
+1、性能较差；2、安全性有问题（容易被注入）；3、序列化后的数据较长，网络传输速率较慢；
+
+
+
+##### 自定义消息转换器
+
+Spring对消息对象的处理是由**org.springframework.amqp.support.converter.MessageConverter**来完成的。
+
+它的默认实现是**SimpleMessageConverter**，是基于JDK的ObjectOutputStream来完成序列化的。
+
+如果要修改，只需要定义一个MessageConverter类型的Bean覆盖即可，<span style="color:red;">推荐使用JSON方式序列化</span>，**步骤如下：**
+
+1.在父工程中引入依赖
+
+```xml
+<dependency>
+    <groupId>com.fasterxml.jackson.dataformat</groupId>
+    <artifactId>jackson-dataformat-xml</artifactId>
+    <version>2.13.0</version>
+</dependency>
+```
+
+
+
+2.在publisher服务中创建配置类并声明MessageConverter（放在启动类中也可）
+
+```java
+@Bean
+public MessageConverter messageConverter() {
+    return new Jackson2JsonMessageConverter();
+}
+```
+
+在页面控制台将队列中的消息清空后（Purge Messages按钮），重新运行发送消息的方法并查看队列消息：
+
+![object.queue队列中的消息2](./images/object.queue队列中的消息2.png)
+
+可以看到序列化的方式变了，且消息体也简单可读。
+
+
+
+##### 接收消息
+
+publisher将消息发送成功后，还要处理consumer接收消息的问题
+
+https://www.bilibili.com/video/BV1LQ4y127n4?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=76
