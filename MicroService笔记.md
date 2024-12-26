@@ -5750,4 +5750,21 @@ public MessageConverter messageConverter() {
 
 publisher将消息发送成功后，还要处理consumer接收消息的问题
 
-https://www.bilibili.com/video/BV1LQ4y127n4?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=76
+同样需要声明MessageConverter，然后定义一个消费者，监听object.queue队列并消费消息
+
+```java
+@RabbitListener(queues = "object.queue")
+public void listenObjectQueue(Map<String, Object> msg) {
+    System.out.println("消费者接收到object.queue的消息：【" + msg + "】");
+}
+```
+
+重启consumer服务后，可以在运行控制台看到如下结果：
+
+![consumer服务消费Object类型的消息](./images/consumer服务消费Object类型的消息.png)
+
+
+
+## ElasticSearch
+
+https://www.bilibili.com/video/BV1LQ4y127n4?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=77

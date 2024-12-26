@@ -7,11 +7,8 @@
     <list default="true" id="eb0a7eec-1643-4004-98e6-3b5bc60f5be1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/../../MicroService笔记.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../MicroService笔记.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/consumer/src/main/java/com/stone/config/FanoutConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/consumer/src/main/java/com/stone/config/FanoutConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/consumer/src/main/java/com/stone/ConsumerApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/consumer/src/main/java/com/stone/ConsumerApplication.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/consumer/src/main/java/com/stone/listener/SpringRabbitListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/consumer/src/main/java/com/stone/listener/SpringRabbitListener.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/publisher/src/main/java/com/stone/PublisherApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/publisher/src/main/java/com/stone/PublisherApplication.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/publisher/src/test/java/com/stone/mq/spring/SpringAmqpTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/publisher/src/test/java/com/stone/mq/spring/SpringAmqpTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,7 +68,7 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected="JUnit.SpringAmqpTest.testSendMessage2ObjectQueue">
+  <component name="RunManager" selected="Spring Boot.ConsumerApplication">
     <configuration name="SpringAmqpTest.testSendMessage2DirectExchange" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="publisher" />
       <extension name="coverage">
@@ -151,8 +148,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2ObjectQueue" />
         <item itemvalue="Spring Boot.ConsumerApplication" />
+        <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2ObjectQueue" />
         <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2TopicExchange" />
         <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2DirectExchange" />
         <item itemvalue="JUnit.SpringAmqpTest.testSendMessage2FanoutExchange" />
@@ -177,7 +174,8 @@
       <workItem from="1734537596089" duration="2154000" />
       <workItem from="1734541874539" duration="1044000" />
       <workItem from="1734613680428" duration="7329000" />
-      <workItem from="1734962719031" duration="6614000" />
+      <workItem from="1734962719031" duration="6665000" />
+      <workItem from="1735251698651" duration="1262000" />
     </task>
     <servers />
   </component>
