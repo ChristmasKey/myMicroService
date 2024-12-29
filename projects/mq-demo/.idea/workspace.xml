@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="eb0a7eec-1643-4004-98e6-3b5bc60f5be1" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../MicroService笔记.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../MicroService笔记.md" afterDir="false" />
+    <list default="true" id="eb0a7eec-1643-4004-98e6-3b5bc60f5be1" name="Changes" comment="RabbitMQ结束，ElasticSearch开始">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/consumer/src/main/java/com/stone/ConsumerApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/consumer/src/main/java/com/stone/ConsumerApplication.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/consumer/src/main/java/com/stone/listener/SpringRabbitListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/consumer/src/main/java/com/stone/listener/SpringRabbitListener.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,6 +21,9 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
   </component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
@@ -175,11 +175,34 @@
       <workItem from="1734541874539" duration="1044000" />
       <workItem from="1734613680428" duration="7329000" />
       <workItem from="1734962719031" duration="6665000" />
-      <workItem from="1735251698651" duration="1262000" />
+      <workItem from="1735251698651" duration="1584000" />
     </task>
+    <task id="LOCAL-00001" summary="RabbitMQ结束，ElasticSearch开始">
+      <created>1735253137635</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1735253137635</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="RabbitMQ结束，ElasticSearch开始" />
+    <option name="LAST_COMMIT_MESSAGE" value="RabbitMQ结束，ElasticSearch开始" />
   </component>
 </project>
